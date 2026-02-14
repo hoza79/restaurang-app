@@ -1,0 +1,55 @@
+# ====================
+# Maven
+# ====================
+/**/target/
+**/pom.xml.tag
+**/pom.xml.releaseBackup
+**/pom.xml.versionsBackup
+**/pom.xml.next
+**/release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# ====================
+# IntelliJ IDEA
+# ====================
+/.idea/
+/*.iml
+/out/
+/*.ipr
+/*.iws
+
+# ====================
+# OS-specific files
+# ====================
+.DS_Store
+Thumbs.db
+*.log
+
+# ====================
+# Payara / GlassFish
+# ====================
+/payara-domains/
+
+# ====================
+# Android Studio (for tablet/mobile modules)
+# ====================
+*.apk
+*.ap_
+*.dex
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# ====================
+# Editor temp files
+# ====================
+*~
+*.swp
