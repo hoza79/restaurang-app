@@ -3,7 +3,13 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd"
              version="3.2">
-  <persistence-unit name="default">
-
+  <persistence-unit name="restaurantPU" transaction-type="JTA">
+    <jta-data-source>jdbc/restaurant_db</jta-data-source>
+    <properties>
+      <!-- Automatically create tables from entities -->
+      <property name="jakarta.persistence.schema-generation.database.action" value="create"/>
+      <!-- Optional: show SQL for debugging -->
+      <property name="jakarta.persistence.logging.level" value="FINE"/>
+    </properties>
   </persistence-unit>
 </persistence>
