@@ -18,6 +18,7 @@ buildNumber.properties
 /out/
 /*.ipr
 /*.iws
+*.ai
 
 # ====================
 # OS-specific files
