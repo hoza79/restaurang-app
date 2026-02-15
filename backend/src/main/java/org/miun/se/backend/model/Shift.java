@@ -28,7 +28,7 @@ public class Shift {
     private ShiftStatus shiftStatus = ShiftStatus.SCHEDULED;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private final LocalDateTime createdAt = LocalDateTime.now();
 
     private LocalDateTime updatedAt;
 

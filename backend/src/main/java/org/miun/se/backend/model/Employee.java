@@ -28,7 +28,7 @@ public class Employee {
     private String emailAddress;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private final LocalDateTime createdAt = LocalDateTime.now();
 
     private LocalDateTime updatedAt;
 
