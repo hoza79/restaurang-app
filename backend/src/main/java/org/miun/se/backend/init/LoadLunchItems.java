@@ -27,7 +27,7 @@ public class LoadLunchItems {
 
             em.persist(new MenuItem(lunch, "Köttbullar med potatismos", "Skafferiets hemlagade köttbullar med potatismos och lingonsylt från urskogen.", 100));
             em.persist(new MenuItem(lunch, "Renskav med potatis", "Lyxig renskav a la Anton med smörslungad potatis och ljuvlig gräddsås.", 120));
-            em.persist(new MenuItem(lunch, "Potatis och lök soppa", "Köksmästarens egna legendariska potatis och löksoppa med äkta franskt ursprung.", 90));
+            em.persist(new MenuItem(lunch, "Potatis och lök soppa", "Köksmästarens egna legendariska potatis och löksoppa med äkta franskt ursprung.", 80));
         }
     }
 }
