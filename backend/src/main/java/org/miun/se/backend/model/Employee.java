@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Employee")
+@Table(name = "employee")
 public class Employee {
 
     @Id
@@ -35,6 +35,12 @@ public class Employee {
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Shift> shifts;
 
+    // Lifecycle callback, auto-update updatedAt
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     // Getters and setters
 
     public Integer getEmployeeId() { return employeeId; }
@@ -57,7 +63,6 @@ public class Employee {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     public List<Shift> getShifts() { return shifts; }
     public void setShifts(List<Shift> shifts) { this.shifts = shifts; }

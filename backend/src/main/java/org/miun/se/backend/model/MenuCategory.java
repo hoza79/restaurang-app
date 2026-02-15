@@ -5,11 +5,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Menu_Category")
+@Table(name = "menu_category")
 public class MenuCategory {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer categoryId;
 
     @Column(nullable = false, unique = true)
@@ -19,9 +19,25 @@ public class MenuCategory {
     private List<MenuItem> items;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private final LocalDateTime createdAt = LocalDateTime.now();
 
     private LocalDateTime updatedAt;
+
+    //Constructors
+    public MenuCategory() {
+        // Default no-arg constructor required by JPA
+    }
+
+    public MenuCategory(int categoryId, String categoryName) {
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
+    }
+
+    // Lifecycle callback, auto-update updatedAt
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     // Getters and setters
 
@@ -36,5 +52,4 @@ public class MenuCategory {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

@@ -7,7 +7,7 @@
     <jta-data-source>jdbc/restaurant_db</jta-data-source>
     <properties>
       <!-- Automatically create tables from entities -->
-      <property name="jakarta.persistence.schema-generation.database.action" value="create"/>
+      <property name="jakarta.persistence.schema-generation.database.action" value="drop-and-create"/>
       <!-- Optional: show SQL for debugging -->
       <property name="jakarta.persistence.logging.level" value="FINE"/>
     </properties>

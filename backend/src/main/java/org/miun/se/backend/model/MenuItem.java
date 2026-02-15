@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Menu_Item")
+@Table(name = "menu_item")
 public class MenuItem {
 
     @Id
@@ -35,6 +35,24 @@ public class MenuItem {
 
     private LocalDateTime updatedAt;
 
+    //Constructors
+    public MenuItem() {
+        // Default no-arg constructor required by JPA
+    }
+
+    public MenuItem(MenuCategory menuCategory, String itemName, String itemDescription, double itemPrice) {
+        this.category = menuCategory;
+        this.name = itemName;
+        this.description = itemDescription;
+        this.price = itemPrice;
+    }
+
+    // Lifecycle callback, auto-update updatedAt
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     // Getters and setters
 
     public Integer getMenuItemId() { return menuItemId; }
@@ -60,5 +78,4 @@ public class MenuItem {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

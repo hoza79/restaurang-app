@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import org.miun.se.backend.model.enums.ShiftStatus;
 
 @Entity
-@Table(name = "Shift")
+@Table(name = "shift")
 public class Shift {
 
     @Id
@@ -32,6 +32,12 @@ public class Shift {
 
     private LocalDateTime updatedAt;
 
+    // Lifecycle callback, auto-update updatedAt
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     // Getters and setters
 
     public Integer getShiftId() { return shiftId; }
@@ -51,5 +57,4 @@ public class Shift {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
