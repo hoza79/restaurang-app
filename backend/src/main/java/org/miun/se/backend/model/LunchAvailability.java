@@ -70,7 +70,7 @@ public class LunchAvailability {
 
     // Getters and setters
 
-    public Integer getLunchItemAvailabilityId() {
+    public Integer getLunchAvailabilityId() {
         return lunchAvailabilityId;
     }
 
