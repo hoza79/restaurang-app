@@ -13,7 +13,7 @@ public class Shift {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer shiftId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
@@ -37,13 +37,25 @@ public class Shift {
 
     @PrePersist
     protected void onCreate() {
+        validateTimes();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
+        validateTimes();
         updatedAt = LocalDateTime.now();
+    }
+
+    // Validate time method
+    private void validateTimes() {
+        if (startTime == null || endTime == null) {
+            throw new IllegalArgumentException("Start time and end time must be set");
+        }
+        if (!endTime.isAfter(startTime)) {
+            throw new IllegalArgumentException("End time must be after start time");
+        }
     }
 
     // Getters and setters
