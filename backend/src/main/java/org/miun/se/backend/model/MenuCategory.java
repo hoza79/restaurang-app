@@ -2,6 +2,7 @@ package org.miun.se.backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -9,34 +10,38 @@ import java.util.List;
 public class MenuCategory {
 
     @Id
-    //@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer categoryId;
 
     @Column(nullable = false, unique = true)
     private String categoryName;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MenuItem> items;
+    @OneToMany(mappedBy = "category", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<MenuItem> items = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
-    private final LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     //Constructors
-    public MenuCategory() {
-        // Default no-arg constructor required by JPA
-    }
+    public MenuCategory() {}
 
-    public MenuCategory(int categoryId, String categoryName) {
-        this.categoryId = categoryId;
+    public MenuCategory(String categoryName) {
         this.categoryName = categoryName;
     }
 
-    // Lifecycle callback, auto-update updatedAt
+    // Lifecycle callbacks
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
     @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     // Getters and setters

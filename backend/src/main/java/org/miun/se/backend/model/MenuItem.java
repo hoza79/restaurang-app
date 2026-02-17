@@ -11,7 +11,7 @@ public class MenuItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer menuItemId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private MenuCategory category;
 
@@ -31,8 +31,9 @@ public class MenuItem {
     private Boolean available = true;
 
     @Column(nullable = false, updatable = false)
-    private final LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     //Constructors
@@ -47,10 +48,17 @@ public class MenuItem {
         this.price = itemPrice;
     }
 
-    // Lifecycle callback, auto-update updatedAt
+    // Lifecycle callbacks
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
     @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     // Getters and setters

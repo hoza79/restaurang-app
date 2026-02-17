@@ -19,9 +19,9 @@ public class LoadMenuCategory {
         if (em.createQuery("SELECT c FROM MenuCategory c", MenuCategory.class)
                 .getResultList().isEmpty()) {
 
-            em.persist(new MenuCategory(1, "Lunch"));
-            em.persist(new MenuCategory(2, "A La Carte"));
-            em.persist(new MenuCategory(3, "Drinks"));
+            em.persist(new MenuCategory("Lunch"));
+            em.persist(new MenuCategory("A La Carte"));
+            em.persist(new MenuCategory("Drinks"));
         }
     }
 }

@@ -22,8 +22,11 @@ public class LoadLunchItems {
         if (em.createQuery("SELECT c FROM MenuItem c", MenuItem.class)
                 .getResultList().isEmpty()) {
 
-            // Fetch the MenuCategory objects by ID
-            MenuCategory lunch = em.find(MenuCategory.class, 1); // Lunch category
+            MenuCategory lunch = em.createQuery("SELECT c FROM MenuCategory c WHERE c.categoryName = :name",
+                    MenuCategory.class
+            )
+            .setParameter("name", "Lunch")
+            .getSingleResult();
 
             em.persist(new MenuItem(lunch, "Köttbullar med potatismos", "Skafferiets hemlagade köttbullar med potatismos och lingonsylt från urskogen.", 100));
             em.persist(new MenuItem(lunch, "Renskav med potatis", "Lyxig renskav a la Anton med smörslungad potatis och ljuvlig gräddsås.", 120));
