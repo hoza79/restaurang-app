@@ -9,31 +9,32 @@ public class MenuItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "menu_item_id")
     private Integer menuItemId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private MenuCategory category;
 
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "price", nullable = false)
     private Double price;
 
-    @Column(nullable = false)
+    @Column(name = "default_priority", nullable = false)
     private Integer defaultPriority = 0;
 
-    @Column(nullable = false)
+    @Column(name = "available", nullable = false)
     private Boolean available = true;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     //Constructors

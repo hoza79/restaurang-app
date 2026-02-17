@@ -16,19 +16,20 @@ public class LunchAvailability {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "lunch_availability_id")
     private Integer lunchAvailabilityId;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "menu_item_id", nullable = false)
     private MenuItem menuItem;
 
-    @Column(nullable = false)
+    @Column(name = "weekday", nullable = false)
     private Integer weekday;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     // Constructors

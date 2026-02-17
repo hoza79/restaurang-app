@@ -1,4 +1,4 @@
-package org.miun.se.backend;
+package org.miun.se.backend.rest;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;

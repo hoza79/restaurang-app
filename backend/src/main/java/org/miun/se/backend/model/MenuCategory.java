@@ -11,18 +11,19 @@ public class MenuCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "category_id")
     private Integer categoryId;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "category_name", nullable = false, unique = true)
     private String categoryName;
 
     @OneToMany(mappedBy = "category", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<MenuItem> items = new ArrayList<>();
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     //Constructors
