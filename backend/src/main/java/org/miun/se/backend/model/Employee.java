@@ -1,6 +1,8 @@
 package org.miun.se.backend.model;
 
 import jakarta.persistence.*;
+import org.miun.se.backend.model.enums.EmployeeRole;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,8 +20,9 @@ public class Employee {
     @Column(nullable = false)
     private String lastName;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role;
+    private EmployeeRole role;
 
     @Column(nullable = false)
     private String phoneNumber;
@@ -33,7 +36,7 @@ public class Employee {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "employee", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Shift> shifts;
 
     // Lifecycle callbacks
@@ -59,8 +62,8 @@ public class Employee {
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public EmployeeRole getRole() { return role; }
+    public void setRole(EmployeeRole role) { this.role = role; }
 
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
