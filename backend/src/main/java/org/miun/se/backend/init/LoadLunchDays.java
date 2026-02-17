@@ -39,8 +39,29 @@ public class LoadLunchDays {
                 .setParameter("name", LUNCH_CATEGORY_NAME)
                 .getResultList();
 
-        for (MenuItem item : lunchItems) {
-            em.persist(new LunchAvailability(item, MONDAY));
-        }
+        // Måndag (1): 0,1,2
+        em.persist(new LunchAvailability(lunchItems.get(0), 1));
+        em.persist(new LunchAvailability(lunchItems.get(1), 1));
+        em.persist(new LunchAvailability(lunchItems.get(2), 1));
+
+        // Tisdag (2): 3,4,5
+        em.persist(new LunchAvailability(lunchItems.get(3), 2));
+        em.persist(new LunchAvailability(lunchItems.get(4), 2));
+        em.persist(new LunchAvailability(lunchItems.get(5), 2));
+
+        // Onsdag (3): 6,7,8
+        em.persist(new LunchAvailability(lunchItems.get(6), 3));
+        em.persist(new LunchAvailability(lunchItems.get(7), 3));
+        em.persist(new LunchAvailability(lunchItems.get(8), 3));
+
+        // Torsdag (4): 9,10,11
+        em.persist(new LunchAvailability(lunchItems.get(9), 4));
+        em.persist(new LunchAvailability(lunchItems.get(10), 4));
+        em.persist(new LunchAvailability(lunchItems.get(11), 4));
+
+        // Fredag (5): 12,13,14
+        em.persist(new LunchAvailability(lunchItems.get(12), 5));
+        em.persist(new LunchAvailability(lunchItems.get(13), 5));
+        em.persist(new LunchAvailability(lunchItems.get(14), 5));
     }
 }

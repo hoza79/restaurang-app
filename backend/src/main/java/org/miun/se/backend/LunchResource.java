@@ -6,7 +6,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.miun.se.backend.model.MenuItem;
+import org.miun.se.backend.model.LunchAvailability;
 import org.miun.se.backend.DTO.MenuItemDto;
 
 import java.util.ArrayList;
@@ -26,13 +26,14 @@ public class LunchResource {
     //Hela veckans lunch
     @GET
     public Map<String, Object> getWeekMeals(){
-        List<MenuItem> meals = em.createQuery(
-                "SELECT item FROM MenuItem item WHERE item.category.categoryName ='Lunch'", MenuItem.class)
+        List<LunchAvailability> meals = em.createQuery(
+                "SELECT item FROM LunchAvailability item " + "JOIN FETCH item.menuItem " + "WHERE item.menuItem.category.categoryName ='Lunch'" + "ORDER BY item.weekday", LunchAvailability.class)
                 .getResultList();
 
         List<MenuItemDto> itemsDto = new ArrayList<>();
-        for(MenuItem meal : meals){
-            MenuItemDto mealDto = new MenuItemDto(meal.getName(), meal.getMenuItemId(), meal.getDescription(), meal.getPrice(), meal.getAvailable());
+        for(LunchAvailability meal : meals){
+            MenuItemDto mealDto = new MenuItemDto(meal.getMenuItem().getName(), meal.getMenuItem().getMenuItemId(),
+                    meal.getMenuItem().getDescription(), meal.getMenuItem().getPrice(), meal.getMenuItem().getAvailable(), meal.getWeekday());
             itemsDto.add(mealDto);
         }
 
