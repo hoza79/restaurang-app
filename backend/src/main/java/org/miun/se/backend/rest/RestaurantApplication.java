@@ -1,16 +1,9 @@
 package org.miun.se.backend.rest;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
 
-@Path("/hello-world")
-public class RestaurantApplication {
-    @GET
-    @Produces("text/plain")
-    public String hello() {
-        return "Hello, World!";
-    }
-
+@ApplicationPath("/api")
+public class RestaurantApplication extends Application{
 
 }
