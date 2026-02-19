@@ -102,7 +102,6 @@ public class LoadOrders {
         CustomerOrder appetizerOrder = new CustomerOrder(employees.get(3));
         // Persist order in DB
         em.persist(appetizerOrder);
-
         // Create batches
         OrderBatch mainAppetizerBatch = appetizerOrder.addBatch(BatchType.KITCHEN);
         // Appetizer
@@ -111,7 +110,6 @@ public class LoadOrders {
         mainAppetizerBatch.addItem(oxfile, 1, "rare");
         // serve together
         mainAppetizerBatch.setServeTogether(true);
-
         // Persist batch in DB (this happens when waiter sends order to kitchen)
         em.persist(mainAppetizerBatch);
     }
