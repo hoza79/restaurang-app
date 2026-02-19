@@ -9,7 +9,7 @@ import org.miun.se.backend.model.MenuCategory;
 
 @Singleton
 @Startup
-public class LoadMenuCategory {
+public class LoadMenuCategories {
     @PersistenceContext
     private EntityManager em;
 

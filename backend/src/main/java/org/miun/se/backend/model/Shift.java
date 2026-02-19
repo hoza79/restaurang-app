@@ -11,32 +11,36 @@ public class Shift {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "shift_id")
     private Integer shiftId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
-    @Column(nullable = false)
+    @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
 
-    @Column(nullable = false)
+    @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ShiftStatus shiftStatus = ShiftStatus.SCHEDULED;
+    @Column(name = "shift_status", nullable = false)
+    private ShiftStatus shiftStatus;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     // Lifecycle callbacks
 
     @PrePersist
     protected void onCreate() {
+        if(shiftStatus == null) {
+            shiftStatus = ShiftStatus.SCHEDULED;
+        }
         validateTimes();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
@@ -48,7 +52,16 @@ public class Shift {
         updatedAt = LocalDateTime.now();
     }
 
-    // Validate time method
+    // Constructors
+    protected Shift() {}
+
+    public Shift(Employee employee, LocalDateTime startTime, LocalDateTime endTime) {
+        this.employee = employee;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
+    // Validate startTime, endTime method
     private void validateTimes() {
         if (startTime == null || endTime == null) {
             throw new IllegalArgumentException("Start time and end time must be set");

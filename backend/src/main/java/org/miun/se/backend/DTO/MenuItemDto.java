@@ -9,13 +9,13 @@ public class MenuItemDto {
     private String description;
     private Double price;
     private Boolean available;
-    private Integer mealDay;
+    private LocalDate mealDay;
 
 
 
     public MenuItemDto(){}
 
-    public MenuItemDto(String name, Integer menuItemId, String description, Double price, Boolean available, Integer mealDay){
+    public MenuItemDto(String name, Integer menuItemId, String description, Double price, Boolean available, LocalDate mealDay){
         this.name = name;
         this.menuItemId = menuItemId;
         this.description = description;
@@ -29,12 +29,12 @@ public class MenuItemDto {
     public String getDescription(){ return description ;}
     public Double getPrice(){return price; }
     public Boolean getAvailable() {return available;}
-    public Integer getMealDay() { return mealDay;}
+    public LocalDate getMealDay() { return mealDay;}
 
     public void setName(String name){ this.name = name;}
     public void setMenuItemId(Integer menuItemId){ this.menuItemId = menuItemId; }
     public void setDescription(String description) { this.description = description; }
     public void setPrice(Double price){ this.price = price;}
     public void setAvailable(Boolean available){ this.available = available; }
-    public void setMealDate(Integer mealDay) { this.mealDay = mealDay;}
+    public void setMealDate(LocalDate mealDay) { this.mealDay = mealDay;}
 }

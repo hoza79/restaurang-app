@@ -9,49 +9,52 @@ public class MenuItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "menu_item_id")
     private Integer menuItemId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private MenuCategory category;
 
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(nullable = false)
-    private Double price;
+    @Column(name = "price", nullable = false)
+    private double price;
 
-    @Column(nullable = false)
-    private Integer defaultPriority = 0;
+    @Column(name = "default_priority", nullable = false)
+    private Integer defaultPriority;
 
-    @Column(nullable = false)
-    private Boolean available = true;
+    @Column(name = "available", nullable = false)
+    private Boolean available;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     //Constructors
-    public MenuItem() {
-        // Default no-arg constructor required by JPA
-    }
+    protected MenuItem() {}
 
-    public MenuItem(MenuCategory menuCategory, String itemName, String itemDescription, double itemPrice) {
+    public MenuItem(MenuCategory menuCategory, String itemName, String itemDescription, double itemPrice, Integer defaultPriority) {
         this.category = menuCategory;
         this.name = itemName;
         this.description = itemDescription;
         this.price = itemPrice;
+        this.defaultPriority = defaultPriority;
     }
 
     // Lifecycle callbacks
 
     @PrePersist
     protected void onCreate() {
+        if(available == null) {
+            available = true;
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
@@ -75,8 +78,8 @@ public class MenuItem {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
 
     public Integer getDefaultPriority() { return defaultPriority; }
     public void setDefaultPriority(Integer defaultPriority) { this.defaultPriority = defaultPriority; }

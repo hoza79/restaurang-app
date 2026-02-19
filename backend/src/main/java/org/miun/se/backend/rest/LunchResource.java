@@ -27,13 +27,13 @@ public class LunchResource {
     @GET
     public Map<String, Object> getWeekMeals(){
         List<LunchAvailability> meals = em.createQuery(
-                "SELECT item FROM LunchAvailability item " + "JOIN FETCH item.menuItem " + "WHERE item.menuItem.category.categoryName ='Lunch'" + "ORDER BY item.weekday", LunchAvailability.class)
+                "SELECT item FROM LunchAvailability item " + "JOIN FETCH item.menuItem " + "WHERE item.menuItem.category.categoryName ='Lunch'" + "ORDER BY item.availableDate", LunchAvailability.class)
                 .getResultList();
 
         List<MenuItemDto> itemsDto = new ArrayList<>();
         for(LunchAvailability meal : meals){
             MenuItemDto mealDto = new MenuItemDto(meal.getMenuItem().getName(), meal.getMenuItem().getMenuItemId(),
-                    meal.getMenuItem().getDescription(), meal.getMenuItem().getPrice(), meal.getMenuItem().getAvailable(), meal.getWeekday());
+                    meal.getMenuItem().getDescription(), meal.getMenuItem().getPrice(), meal.getMenuItem().getAvailable(), meal.getAvailableDate());
             itemsDto.add(mealDto);
         }
 

@@ -1,13 +1,15 @@
 package org.miun.se.backend.model;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "lunch_availability",
         uniqueConstraints = @UniqueConstraint(
-                name = "unique_weekday_per_menu_item",
-                columnNames = {"menu_item_id", "weekday"}
+                name = "unique_date_per_menu_item",
+                columnNames = {"menu_item_id", "available_date"}
         )
 )
 public class LunchAvailability {
@@ -16,27 +18,28 @@ public class LunchAvailability {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "lunch_availability_id")
     private Integer lunchAvailabilityId;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "menu_item_id", nullable = false)
     private MenuItem menuItem;
 
-    @Column(nullable = false)
-    private Integer weekday;
+    @Column(name = "available_date", nullable = false)
+    private LocalDate availableDate;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     // Constructors
-    public LunchAvailability() {}
+    protected LunchAvailability() {}
 
-    public LunchAvailability(MenuItem menuItem, Integer weekday) {
+    public LunchAvailability(MenuItem menuItem, LocalDate availableDate) {
         this.menuItem = menuItem;
-        this.weekday = weekday;
+        this.availableDate = availableDate;
     }
 
     // Lifecycle callbacks
@@ -54,11 +57,6 @@ public class LunchAvailability {
     }
 
     private void validate() {
-        Integer weekday = getWeekday();
-        if (weekday == null || weekday < 1 || weekday > 5) {
-            throw new IllegalArgumentException("Weekday must be in range 1-5");
-        }
-
         if (menuItem == null || menuItem.getCategory() == null || menuItem.getCategory().getCategoryName() == null) {
             throw new IllegalArgumentException("MenuItem and MenuItem category must be set");
         }
@@ -82,12 +80,12 @@ public class LunchAvailability {
         this.menuItem = menuItem;
     }
 
-    public Integer getWeekday() {
-        return weekday;
+    public LocalDate getAvailableDate() {
+        return availableDate;
     }
 
-    public void setWeekday(Integer weekday) {
-        this.weekday = weekday;
+    public void setAvailableDate(LocalDate availableDate) {
+        this.availableDate = availableDate;
     }
 
     public LocalDateTime getCreatedAt() { return createdAt; }

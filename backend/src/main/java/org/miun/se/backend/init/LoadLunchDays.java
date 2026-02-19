@@ -9,15 +9,17 @@ import jakarta.persistence.PersistenceContext;
 import org.miun.se.backend.model.LunchAvailability;
 import org.miun.se.backend.model.MenuItem;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 @Singleton
 @Startup
-@DependsOn("LoadLunchItems")
+@DependsOn("LoadMenuItems")
 public class LoadLunchDays {
 
     private static final String LUNCH_CATEGORY_NAME = "Lunch";
-    private static final int MONDAY = 1;
 
     @PersistenceContext
     private EntityManager em;
@@ -39,29 +41,36 @@ public class LoadLunchDays {
                 .setParameter("name", LUNCH_CATEGORY_NAME)
                 .getResultList();
 
+        // Start from next Monday
+        LocalDate monday = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
+
         // Måndag (1): 0,1,2
-        em.persist(new LunchAvailability(lunchItems.get(0), 1));
-        em.persist(new LunchAvailability(lunchItems.get(1), 1));
-        em.persist(new LunchAvailability(lunchItems.get(2), 1));
+        em.persist(new LunchAvailability(lunchItems.get(0), monday));
+        em.persist(new LunchAvailability(lunchItems.get(1), monday));
+        em.persist(new LunchAvailability(lunchItems.get(2), monday));
 
         // Tisdag (2): 3,4,5
-        em.persist(new LunchAvailability(lunchItems.get(3), 2));
-        em.persist(new LunchAvailability(lunchItems.get(4), 2));
-        em.persist(new LunchAvailability(lunchItems.get(5), 2));
+        LocalDate tuesday = monday.plusDays(1);
+        em.persist(new LunchAvailability(lunchItems.get(3), tuesday));
+        em.persist(new LunchAvailability(lunchItems.get(4), tuesday));
+        em.persist(new LunchAvailability(lunchItems.get(5), tuesday));
 
         // Onsdag (3): 6,7,8
-        em.persist(new LunchAvailability(lunchItems.get(6), 3));
-        em.persist(new LunchAvailability(lunchItems.get(7), 3));
-        em.persist(new LunchAvailability(lunchItems.get(8), 3));
+        LocalDate wednesday = monday.plusDays(2);
+        em.persist(new LunchAvailability(lunchItems.get(6), wednesday));
+        em.persist(new LunchAvailability(lunchItems.get(7), wednesday));
+        em.persist(new LunchAvailability(lunchItems.get(8), wednesday));
 
         // Torsdag (4): 9,10,11
-        em.persist(new LunchAvailability(lunchItems.get(9), 4));
-        em.persist(new LunchAvailability(lunchItems.get(10), 4));
-        em.persist(new LunchAvailability(lunchItems.get(11), 4));
+        LocalDate thursday = monday.plusDays(3);
+        em.persist(new LunchAvailability(lunchItems.get(9), thursday));
+        em.persist(new LunchAvailability(lunchItems.get(10), thursday));
+        em.persist(new LunchAvailability(lunchItems.get(11), thursday));
 
         // Fredag (5): 12,13,14
-        em.persist(new LunchAvailability(lunchItems.get(12), 5));
-        em.persist(new LunchAvailability(lunchItems.get(13), 5));
-        em.persist(new LunchAvailability(lunchItems.get(14), 5));
+        LocalDate friday = monday.plusDays(4);
+        em.persist(new LunchAvailability(lunchItems.get(12), friday));
+        em.persist(new LunchAvailability(lunchItems.get(13), friday));
+        em.persist(new LunchAvailability(lunchItems.get(14), friday));
     }
 }

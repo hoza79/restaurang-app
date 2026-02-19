@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.miun.se.backend.model.enums.EmployeeRole;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -12,32 +13,36 @@ public class Employee {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "employee_id")
     private Integer employeeId;
 
-    @Column(nullable = false)
+    @Column(name = "first_name", nullable = false)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(name = "last_name", nullable = false)
     private String lastName;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false)
     private EmployeeRole role;
 
-    @Column(nullable = false)
+    @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "email_address", nullable = false, unique = true)
     private String emailAddress;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "employee", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Shift> shifts;
+    private List<Shift> shifts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "employee", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<CustomerOrder> orders = new ArrayList<>();
 
     // Lifecycle callbacks
     @PrePersist
@@ -49,6 +54,17 @@ public class Employee {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // Constructors
+    protected Employee() {}
+
+    public Employee(String firstName, String lastName, EmployeeRole role, String phoneNumber, String emailAddress) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.role = role;
+        this.phoneNumber = phoneNumber;
+        this.emailAddress = emailAddress;
     }
 
     // Getters and setters
@@ -76,4 +92,7 @@ public class Employee {
 
     public List<Shift> getShifts() { return shifts; }
     public void setShifts(List<Shift> shifts) { this.shifts = shifts; }
+
+    public List<CustomerOrder> getOrders() { return orders; }
+    public void setOrders(List<CustomerOrder> orders) { this.orders = orders; }
 }
