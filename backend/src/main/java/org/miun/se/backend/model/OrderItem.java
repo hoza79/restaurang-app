@@ -29,8 +29,8 @@ public class OrderItem {
     @Column(name = "applied_priority", nullable = false)
     private Integer appliedPriority;
 
-    @Column(name = "notes", nullable = false)
-    private String notes = "";
+    @Column(name = "notes")
+    private String notes;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -41,24 +41,31 @@ public class OrderItem {
     // Constructors
     protected OrderItem() {}
 
-    public OrderItem(MenuItem menuItem, OrderBatch orderBatch, String notes) {
-        this.menuItem = menuItem;
+    public OrderItem(OrderBatch orderBatch, MenuItem menuItem, int quantity, String notes) {
+
+        if (orderBatch == null) {
+            throw new IllegalArgumentException("OrderBatch cannot be null");
+        }
+
+        if (menuItem == null) {
+            throw new IllegalArgumentException("MenuItem cannot be null");
+        }
+
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+
         this.orderBatch = orderBatch;
+        this.menuItem = menuItem;
+        this.quantity = quantity;
+        this.itemPrice = menuItem.getPrice();
+        this.appliedPriority = menuItem.getDefaultPriority();
         this.notes = notes;
     }
 
     // Lifecycle callbacks
     @PrePersist
     protected void onCreate() {
-        if(menuItem != null){
-            itemPrice = menuItem.getPrice();
-        }
-        if(appliedPriority == null && menuItem != null){
-            appliedPriority = menuItem.getDefaultPriority();
-        }
-        if(quantity == null) {
-            quantity = 1;
-        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

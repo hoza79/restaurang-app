@@ -46,15 +46,13 @@ public class MenuItem {
         this.description = itemDescription;
         this.price = itemPrice;
         this.defaultPriority = defaultPriority;
+        this.available = true;
     }
 
     // Lifecycle callbacks
 
     @PrePersist
     protected void onCreate() {
-        if(available == null) {
-            available = true;
-        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

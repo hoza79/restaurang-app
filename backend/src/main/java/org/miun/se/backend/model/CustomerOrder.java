@@ -2,6 +2,7 @@ package org.miun.se.backend.model;
 
 
 import jakarta.persistence.*;
+import org.miun.se.backend.model.enums.BatchType;
 import org.miun.se.backend.model.enums.OrderStatus;
 
 import java.time.LocalDateTime;
@@ -49,15 +50,13 @@ public class CustomerOrder {
     public CustomerOrder(Employee employee) {
         //this.table = table;
         this.employee = employee;
+        this.orderStatus = OrderStatus.IN_PROGRESS;
+        this.totalPrice = 0.0;
     }
 
     // Lifecycle callbacks
     @PrePersist
     protected void onCreate() {
-        if(orderStatus == null){
-            orderStatus = OrderStatus.IN_PROGRESS;
-        }
-        calculateTotalPrice();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
@@ -67,17 +66,20 @@ public class CustomerOrder {
         updatedAt = LocalDateTime.now();
     }
 
-    //Calculate total price of order
-    private void calculateTotalPrice(){
-        totalPrice = 0.0;
-        if (orderBatches != null) {
-            for (OrderBatch batch : orderBatches) {
-                if (batch.getItems() != null) {
-                    for (OrderItem item : batch.getItems()) {
-                        if (item.getQuantity() != null) {
-                            totalPrice += item.getItemPrice() * item.getQuantity();
-                        }
-                    }
+    // Create batch
+    public OrderBatch addBatch(BatchType batchType) {
+        OrderBatch batch = new OrderBatch(this, batchType);
+        orderBatches.add(batch);
+        return batch;
+    }
+
+    //Recalculate total price of CustomerOrder
+    public void recalculateTotalPrice(){
+        this.totalPrice = 0.0;
+        for (OrderBatch batch : orderBatches) {
+            for (OrderItem item : batch.getItems()) {
+                if (item.getQuantity() != null) {
+                    this.totalPrice += item.getItemPrice() * item.getQuantity();
                 }
             }
         }

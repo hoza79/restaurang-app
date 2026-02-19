@@ -34,8 +34,10 @@ public class OrderBatch {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "orderBatch", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "orderBatch", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    private Boolean serveTogether = false;
 
     //Constructors
     protected OrderBatch() {}
@@ -43,15 +45,13 @@ public class OrderBatch {
     public OrderBatch(CustomerOrder customerOrder, BatchType batchType) {
         this.customerOrder = customerOrder;
         this.batchType = batchType;
+        this.batchStatus = BatchStatus.PROCESSING;
     }
 
     // Lifecycle callbacks
 
     @PrePersist
     protected void onCreate() {
-        if(batchStatus == null){
-            batchStatus = BatchStatus.PROCESSING;
-        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
@@ -59,6 +59,51 @@ public class OrderBatch {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // Add OrderItem to OrderBatch, appliedPriority
+    public OrderItem addItem(MenuItem menuItem, Integer quantity, String notes) {
+
+        if (menuItem == null) { throw new IllegalArgumentException("MenuItem cannot be null"); }
+
+        if (quantity <= 0) { throw new IllegalArgumentException("Quantity must be greater than 0"); }
+
+        OrderItem item = new OrderItem(this, menuItem, quantity, notes);
+
+        orderItems.add(item);
+
+        // serveTogether: set appliedPriority to lowest priority among all items
+        if (serveTogether) {
+            Integer lowest = orderItems.stream()
+                    .mapToInt(OrderItem::getAppliedPriority)
+                    .min()
+                    .orElse(item.getAppliedPriority());
+            orderItems.forEach(i -> i.setAppliedPriority(lowest));
+        }
+
+        // Notify the parent order, recalculate totalPrice
+        if (customerOrder != null) {
+            customerOrder.recalculateTotalPrice();
+        }
+
+        return item;
+    }
+
+    public void setServeTogether(Boolean serveTogether) {
+        this.serveTogether = serveTogether;
+
+        // serveTogether : set appliedPriority to lowest priority among all items
+        if (serveTogether) {
+            Integer lowest = orderItems.stream()
+                    .mapToInt(OrderItem::getAppliedPriority)
+                    .min()
+                    .orElse(0);
+            orderItems.forEach(i -> i.setAppliedPriority(lowest));
+        }
+        else {
+            // Reset all items to their menu item's default priority
+            orderItems.forEach(i -> i.setAppliedPriority(i.getMenuItem().getDefaultPriority()));
+        }
     }
 
     //Getters and setters
@@ -75,8 +120,9 @@ public class OrderBatch {
     public BatchStatus getBatchStatus() { return batchStatus; }
     public void setBatchStatus(BatchStatus batchStatus) { this.batchStatus = batchStatus; }
 
-    public List<OrderItem> getItems() { return orderItems; }
-    public void setItems(List<OrderItem> items) { this.orderItems = items; }
+    public List<OrderItem> getItems() {
+        return List.copyOf(orderItems);
+    }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

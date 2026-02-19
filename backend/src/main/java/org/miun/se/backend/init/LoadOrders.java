@@ -40,60 +40,63 @@ public class LoadOrders {
         MenuItem cremeBrulee = findItem("Crème brûlée");
 
         // -------------------------------------------------
-        // 1️⃣ Drink-only order
+        // Drink-only order
         // -------------------------------------------------
         CustomerOrder drinkOrder = new CustomerOrder(employees.get(0));
+
+        OrderBatch drinkBatch = drinkOrder.addBatch(BatchType.BAR);
+        drinkBatch.addItem(coke, 2, "");
+
         em.persist(drinkOrder);
 
-        OrderBatch drinkBatch = new OrderBatch(drinkOrder, BatchType.BAR);
-        em.persist(drinkBatch);
-
-        OrderItem drinkItem = new OrderItem(coke, drinkBatch, "");
-        em.persist(drinkItem);
-
         // -------------------------------------------------
-        // 2️⃣ Lunch + Drinks order
+        // Lunch + Drinks order
         // -------------------------------------------------
         CustomerOrder lunchDrinkOrder = new CustomerOrder(employees.get(1));
+
+        OrderBatch lunchBatch = lunchDrinkOrder.addBatch(BatchType.KITCHEN);
+        lunchBatch.addItem(meatballs, 1, "");
+        lunchBatch.addItem(renskav, 1, "extra lingon");
+
+        OrderBatch lunchDrinkBatch = lunchDrinkOrder.addBatch(BatchType.BAR);
+        lunchDrinkBatch.addItem(coke, 2, "no ice");
+
         em.persist(lunchDrinkOrder);
 
-        OrderBatch lunchBatch = new OrderBatch(lunchDrinkOrder, BatchType.KITCHEN);
-        em.persist(lunchBatch);
-
-        em.persist(new OrderItem(meatballs, lunchBatch, ""));
-        em.persist(new OrderItem(renskav, lunchBatch, "extra lingon"));
-
-        OrderBatch lunchDrinkBatch = new OrderBatch(lunchDrinkOrder, BatchType.BAR);
-        em.persist(lunchDrinkBatch);
-
-        em.persist(new OrderItem(coke, lunchDrinkBatch, ""));
-
         // -------------------------------------------------
-        // 3️⃣ A La Carte (Appetizer + Main)
+        // A La Carte (Appetizer + Main + Drink)
         // -------------------------------------------------
         CustomerOrder alaCarteOrder = new CustomerOrder(employees.get(2));
+
+        OrderBatch alaCarteBatch = alaCarteOrder.addBatch(BatchType.KITCHEN);
+        alaCarteBatch.addItem(garlicBread, 1, "");
+        alaCarteBatch.addItem(oxfile, 1, "medium rare");
+
+        OrderBatch alaCarteDrinkBatch = alaCarteOrder.addBatch(BatchType.BAR);
+        alaCarteDrinkBatch.addItem(coke, 1, "half ice");
+
         em.persist(alaCarteOrder);
 
-        OrderBatch appetizerBatch = new OrderBatch(alaCarteOrder, BatchType.KITCHEN);
-        em.persist(appetizerBatch);
-
-        em.persist(new OrderItem(garlicBread, appetizerBatch, ""));
-
-        OrderBatch mainBatch = new OrderBatch(alaCarteOrder, BatchType.KITCHEN);
-        em.persist(mainBatch);
-
-        em.persist(new OrderItem(oxfile, mainBatch, "medium rare"));
-
         // -------------------------------------------------
-        // 4️⃣ Dessert-only order
+        // Dessert-only order
         // -------------------------------------------------
         CustomerOrder dessertOrder = new CustomerOrder(employees.get(3));
+
+        OrderBatch dessertBatch = dessertOrder.addBatch(BatchType.KITCHEN);
+        dessertBatch.addItem(cremeBrulee, 1, "");
+
         em.persist(dessertOrder);
 
-        OrderBatch dessertBatch = new OrderBatch(dessertOrder, BatchType.KITCHEN);
-        em.persist(dessertBatch);
+        // -------------------------------------------------
+        // Appetizer server with Main Course order
+        // -------------------------------------------------
+        CustomerOrder appetizerOrder = new CustomerOrder(employees.get(3));
 
-        em.persist(new OrderItem(cremeBrulee, dessertBatch, ""));
+        OrderBatch mainAppetizerBatch = appetizerOrder.addBatch(BatchType.KITCHEN);
+        mainAppetizerBatch.addItem(garlicBread, 1, "no garlic");
+        mainAppetizerBatch.addItem(oxfile, 1, "rare");
+        mainAppetizerBatch.setServeTogether(true);
+        em.persist(appetizerOrder);
     }
 
     private MenuItem findItem(String name) {
