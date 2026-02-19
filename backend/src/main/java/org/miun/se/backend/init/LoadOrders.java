@@ -45,7 +45,7 @@ public class LoadOrders {
         CustomerOrder drinkOrder = new CustomerOrder(employees.get(0));
         em.persist(drinkOrder);
 
-        OrderBatch drinkBatch = new OrderBatch(drinkOrder, BatchType.DRINKS);
+        OrderBatch drinkBatch = new OrderBatch(drinkOrder, BatchType.BAR);
         em.persist(drinkBatch);
 
         OrderItem drinkItem = new OrderItem(coke, drinkBatch, "");
@@ -57,13 +57,13 @@ public class LoadOrders {
         CustomerOrder lunchDrinkOrder = new CustomerOrder(employees.get(1));
         em.persist(lunchDrinkOrder);
 
-        OrderBatch lunchBatch = new OrderBatch(lunchDrinkOrder, BatchType.MAIN_COURSES);
+        OrderBatch lunchBatch = new OrderBatch(lunchDrinkOrder, BatchType.KITCHEN);
         em.persist(lunchBatch);
 
         em.persist(new OrderItem(meatballs, lunchBatch, ""));
         em.persist(new OrderItem(renskav, lunchBatch, "extra lingon"));
 
-        OrderBatch lunchDrinkBatch = new OrderBatch(lunchDrinkOrder, BatchType.DRINKS);
+        OrderBatch lunchDrinkBatch = new OrderBatch(lunchDrinkOrder, BatchType.BAR);
         em.persist(lunchDrinkBatch);
 
         em.persist(new OrderItem(coke, lunchDrinkBatch, ""));
@@ -74,12 +74,12 @@ public class LoadOrders {
         CustomerOrder alaCarteOrder = new CustomerOrder(employees.get(2));
         em.persist(alaCarteOrder);
 
-        OrderBatch appetizerBatch = new OrderBatch(alaCarteOrder, BatchType.APPETIZERS);
+        OrderBatch appetizerBatch = new OrderBatch(alaCarteOrder, BatchType.KITCHEN);
         em.persist(appetizerBatch);
 
         em.persist(new OrderItem(garlicBread, appetizerBatch, ""));
 
-        OrderBatch mainBatch = new OrderBatch(alaCarteOrder, BatchType.MAIN_COURSES);
+        OrderBatch mainBatch = new OrderBatch(alaCarteOrder, BatchType.KITCHEN);
         em.persist(mainBatch);
 
         em.persist(new OrderItem(oxfile, mainBatch, "medium rare"));
@@ -90,7 +90,7 @@ public class LoadOrders {
         CustomerOrder dessertOrder = new CustomerOrder(employees.get(3));
         em.persist(dessertOrder);
 
-        OrderBatch dessertBatch = new OrderBatch(dessertOrder, BatchType.DESSERTS);
+        OrderBatch dessertBatch = new OrderBatch(dessertOrder, BatchType.KITCHEN);
         em.persist(dessertBatch);
 
         em.persist(new OrderItem(cremeBrulee, dessertBatch, ""));
