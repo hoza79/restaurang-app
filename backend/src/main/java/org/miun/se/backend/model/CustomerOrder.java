@@ -41,7 +41,7 @@ public class CustomerOrder {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "customerOrder", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "customerOrder")
     private List<OrderBatch> orderBatches = new ArrayList<>();
 
     // Constructors

@@ -43,60 +43,77 @@ public class LoadOrders {
         // Drink-only order
         // -------------------------------------------------
         CustomerOrder drinkOrder = new CustomerOrder(employees.get(0));
+        em.persist(drinkOrder);
 
         OrderBatch drinkBatch = drinkOrder.addBatch(BatchType.BAR);
         drinkBatch.addItem(coke, 2, "");
-
-        em.persist(drinkOrder);
+        em.persist(drinkBatch);
 
         // -------------------------------------------------
         // Lunch + Drinks order
         // -------------------------------------------------
         CustomerOrder lunchDrinkOrder = new CustomerOrder(employees.get(1));
+        em.persist(lunchDrinkOrder);
 
         OrderBatch lunchBatch = lunchDrinkOrder.addBatch(BatchType.KITCHEN);
         lunchBatch.addItem(meatballs, 1, "");
         lunchBatch.addItem(renskav, 1, "extra lingon");
+        em.persist(lunchBatch);
 
         OrderBatch lunchDrinkBatch = lunchDrinkOrder.addBatch(BatchType.BAR);
         lunchDrinkBatch.addItem(coke, 2, "no ice");
+        em.persist(lunchDrinkBatch);
 
-        em.persist(lunchDrinkOrder);
+
 
         // -------------------------------------------------
         // A La Carte (Appetizer + Main + Drink)
         // -------------------------------------------------
         CustomerOrder alaCarteOrder = new CustomerOrder(employees.get(2));
+        em.persist(alaCarteOrder);
 
         OrderBatch alaCarteBatch = alaCarteOrder.addBatch(BatchType.KITCHEN);
         alaCarteBatch.addItem(garlicBread, 1, "");
         alaCarteBatch.addItem(oxfile, 1, "medium rare");
+        em.persist(alaCarteBatch);
 
         OrderBatch alaCarteDrinkBatch = alaCarteOrder.addBatch(BatchType.BAR);
         alaCarteDrinkBatch.addItem(coke, 1, "half ice");
+        em.persist(alaCarteDrinkBatch);
 
-        em.persist(alaCarteOrder);
+
 
         // -------------------------------------------------
         // Dessert-only order
         // -------------------------------------------------
         CustomerOrder dessertOrder = new CustomerOrder(employees.get(3));
+        em.persist(dessertOrder);
 
         OrderBatch dessertBatch = dessertOrder.addBatch(BatchType.KITCHEN);
         dessertBatch.addItem(cremeBrulee, 1, "");
+        em.persist(dessertBatch);
 
-        em.persist(dessertOrder);
 
         // -------------------------------------------------
         // Appetizer server with Main Course order
         // -------------------------------------------------
-        CustomerOrder appetizerOrder = new CustomerOrder(employees.get(3));
 
-        OrderBatch mainAppetizerBatch = appetizerOrder.addBatch(BatchType.KITCHEN);
-        mainAppetizerBatch.addItem(garlicBread, 1, "no garlic");
-        mainAppetizerBatch.addItem(oxfile, 1, "rare");
-        mainAppetizerBatch.setServeTogether(true);
+        // Create order
+        CustomerOrder appetizerOrder = new CustomerOrder(employees.get(3));
+        // Persist order in DB
         em.persist(appetizerOrder);
+
+        // Create batches
+        OrderBatch mainAppetizerBatch = appetizerOrder.addBatch(BatchType.KITCHEN);
+        // Appetizer
+        mainAppetizerBatch.addItem(garlicBread, 1, "no garlic");
+        // Main course
+        mainAppetizerBatch.addItem(oxfile, 1, "rare");
+        // serve together
+        mainAppetizerBatch.setServeTogether(true);
+
+        // Persist batch in DB (this happens when waiter sends order to kitchen)
+        em.persist(mainAppetizerBatch);
     }
 
     private MenuItem findItem(String name) {
