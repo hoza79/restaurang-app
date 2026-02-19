@@ -23,13 +23,13 @@ public class MenuItem {
     private String description;
 
     @Column(name = "price", nullable = false)
-    private Double price;
+    private double price;
 
     @Column(name = "default_priority", nullable = false)
-    private Integer defaultPriority = 0;
+    private Integer defaultPriority;
 
     @Column(name = "available", nullable = false)
-    private Boolean available = true;
+    private Boolean available;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -38,21 +38,23 @@ public class MenuItem {
     private LocalDateTime updatedAt;
 
     //Constructors
-    public MenuItem() {
-        // Default no-arg constructor required by JPA
-    }
+    protected MenuItem() {}
 
-    public MenuItem(MenuCategory menuCategory, String itemName, String itemDescription, double itemPrice) {
+    public MenuItem(MenuCategory menuCategory, String itemName, String itemDescription, double itemPrice, Integer defaultPriority) {
         this.category = menuCategory;
         this.name = itemName;
         this.description = itemDescription;
         this.price = itemPrice;
+        this.defaultPriority = defaultPriority;
     }
 
     // Lifecycle callbacks
 
     @PrePersist
     protected void onCreate() {
+        if(available == null) {
+            available = true;
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
@@ -76,8 +78,8 @@ public class MenuItem {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
 
     public Integer getDefaultPriority() { return defaultPriority; }
     public void setDefaultPriority(Integer defaultPriority) { this.defaultPriority = defaultPriority; }

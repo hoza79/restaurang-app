@@ -26,7 +26,7 @@ public class Shift {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "shift_status", nullable = false)
-    private ShiftStatus shiftStatus = ShiftStatus.SCHEDULED;
+    private ShiftStatus shiftStatus;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -38,6 +38,9 @@ public class Shift {
 
     @PrePersist
     protected void onCreate() {
+        if(shiftStatus == null) {
+            shiftStatus = ShiftStatus.SCHEDULED;
+        }
         validateTimes();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
@@ -49,7 +52,16 @@ public class Shift {
         updatedAt = LocalDateTime.now();
     }
 
-    // Validate time method
+    // Constructors
+    protected Shift() {}
+
+    public Shift(Employee employee, LocalDateTime startTime, LocalDateTime endTime) {
+        this.employee = employee;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
+    // Validate startTime, endTime method
     private void validateTimes() {
         if (startTime == null || endTime == null) {
             throw new IllegalArgumentException("Start time and end time must be set");
