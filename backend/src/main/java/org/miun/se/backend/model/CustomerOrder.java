@@ -18,11 +18,9 @@ public class CustomerOrder {
     @Column(name = "order_id")
     private Integer orderId;
 
-    /* Implement when table is implemented
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "table_id", nullable = false)
-    private DiningTable dining_table;
-    */
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "table_id")
+    private DiningTable diningTable;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
@@ -47,8 +45,8 @@ public class CustomerOrder {
     // Constructors
     protected CustomerOrder() {}
 
-    public CustomerOrder(Employee employee) {
-        //this.table = table;
+    public CustomerOrder(DiningTable table, Employee employee) {
+        this.diningTable = table;
         this.employee = employee;
         this.orderStatus = OrderStatus.IN_PROGRESS;
         this.totalPrice = 0.0;
@@ -66,7 +64,7 @@ public class CustomerOrder {
         updatedAt = LocalDateTime.now();
     }
 
-    // Create batch
+    // Create and add OrderBatch to CustomerOrder
     public OrderBatch addBatch(BatchType batchType) {
         OrderBatch batch = new OrderBatch(this, batchType);
         orderBatches.add(batch);
@@ -88,6 +86,9 @@ public class CustomerOrder {
     // Getters and setters
     public Integer getOrderId() { return orderId; }
     public void setOrderId(Integer orderId) { this.orderId = orderId; }
+
+    public DiningTable getDiningTable() { return diningTable; }
+    public void setDiningTable(DiningTable diningTable) { this.diningTable = diningTable; }
 
     public Employee getEmployee() { return employee; }
     public void setEmployee(Employee employee) { this.employee = employee; }

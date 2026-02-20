@@ -13,7 +13,7 @@ import java.util.List;
 
 @Singleton
 @Startup
-@DependsOn({"LoadEmployees", "LoadMenuItems"})
+@DependsOn({"LoadDiningTables", "LoadEmployees", "LoadMenuItems"})
 public class LoadOrders {
 
     @PersistenceContext
@@ -27,6 +27,9 @@ public class LoadOrders {
         if (existing != 0L) {
             return;
         }
+
+        List<DiningTable> tables = em.createQuery("SELECT e FROM DiningTable e", DiningTable.class)
+                .getResultList();
 
         List<Employee> employees = em.createQuery("SELECT e FROM Employee e", Employee.class)
                 .getResultList();
@@ -42,7 +45,7 @@ public class LoadOrders {
         // -------------------------------------------------
         // Drink-only order
         // -------------------------------------------------
-        CustomerOrder drinkOrder = new CustomerOrder(employees.get(0));
+        CustomerOrder drinkOrder = new CustomerOrder(tables.get(0), employees.get(0));
         em.persist(drinkOrder);
 
         OrderBatch drinkBatch = drinkOrder.addBatch(BatchType.BAR);
@@ -52,7 +55,7 @@ public class LoadOrders {
         // -------------------------------------------------
         // Lunch + Drinks order
         // -------------------------------------------------
-        CustomerOrder lunchDrinkOrder = new CustomerOrder(employees.get(1));
+        CustomerOrder lunchDrinkOrder = new CustomerOrder(tables.get(1), employees.get(1));
         em.persist(lunchDrinkOrder);
 
         OrderBatch lunchBatch = lunchDrinkOrder.addBatch(BatchType.KITCHEN);
@@ -69,7 +72,7 @@ public class LoadOrders {
         // -------------------------------------------------
         // A La Carte (Appetizer + Main + Drink)
         // -------------------------------------------------
-        CustomerOrder alaCarteOrder = new CustomerOrder(employees.get(2));
+        CustomerOrder alaCarteOrder = new CustomerOrder(tables.get(2), employees.get(2));
         em.persist(alaCarteOrder);
 
         OrderBatch alaCarteBatch = alaCarteOrder.addBatch(BatchType.KITCHEN);
@@ -86,7 +89,7 @@ public class LoadOrders {
         // -------------------------------------------------
         // Dessert-only order
         // -------------------------------------------------
-        CustomerOrder dessertOrder = new CustomerOrder(employees.get(3));
+        CustomerOrder dessertOrder = new CustomerOrder(tables.get(3), employees.get(3));
         em.persist(dessertOrder);
 
         OrderBatch dessertBatch = dessertOrder.addBatch(BatchType.KITCHEN);
@@ -99,7 +102,7 @@ public class LoadOrders {
         // -------------------------------------------------
 
         // Create order
-        CustomerOrder appetizerOrder = new CustomerOrder(employees.get(3));
+        CustomerOrder appetizerOrder = new CustomerOrder(tables.get(4), employees.get(3));
         // Persist order in DB
         em.persist(appetizerOrder);
         // Create batches
