@@ -26,9 +26,6 @@ public class OrderItem {
     @Column(name = "item_price", nullable = false)
     private double itemPrice;
 
-    @Column(name = "applied_priority", nullable = false)
-    private Integer appliedPriority;
-
     @Column(name = "notes")
     private String notes;
 
@@ -59,7 +56,6 @@ public class OrderItem {
         this.menuItem = menuItem;
         this.quantity = quantity;
         this.itemPrice = menuItem.getPrice();
-        this.appliedPriority = menuItem.getDefaultPriority();
         this.notes = notes;
     }
 
@@ -90,9 +86,6 @@ public class OrderItem {
 
     public double getItemPrice() { return itemPrice; }
     public void setItemPrice(double itemPrice) { this.itemPrice = itemPrice; }
-
-    public Integer getAppliedPriority() { return appliedPriority; }
-    public void setAppliedPriority(Integer appliedPriority) { this.appliedPriority = appliedPriority; }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }

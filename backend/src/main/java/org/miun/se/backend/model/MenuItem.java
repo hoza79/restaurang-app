@@ -25,9 +25,6 @@ public class MenuItem {
     @Column(name = "price", nullable = false)
     private double price;
 
-    @Column(name = "default_priority", nullable = false)
-    private Integer defaultPriority;
-
     @Column(name = "available", nullable = false)
     private Boolean available;
 
@@ -45,7 +42,6 @@ public class MenuItem {
         this.name = itemName;
         this.description = itemDescription;
         this.price = itemPrice;
-        this.defaultPriority = defaultPriority;
         this.available = true;
     }
 
@@ -78,9 +74,6 @@ public class MenuItem {
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
-
-    public Integer getDefaultPriority() { return defaultPriority; }
-    public void setDefaultPriority(Integer defaultPriority) { this.defaultPriority = defaultPriority; }
 
     public Boolean getAvailable() { return available; }
     public void setAvailable(Boolean available) { this.available = available; }

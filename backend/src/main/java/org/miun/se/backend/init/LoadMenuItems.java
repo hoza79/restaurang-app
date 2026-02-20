@@ -34,13 +34,23 @@ public class LoadMenuItems {
                     .setParameter("name", "Lunch")
                     .getSingleResult();
 
-            MenuCategory alacarte = em.createQuery("SELECT c FROM MenuCategory c WHERE c.categoryName = :name",
+            MenuCategory appetizers = em.createQuery("SELECT c FROM MenuCategory c WHERE c.categoryName = :name",
                             MenuCategory.class
                     )
-                    .setParameter("name", "A La Carte")
+                    .setParameter("name", "Appetizers")
                     .getSingleResult();
 
+            MenuCategory mainCourses = em.createQuery("SELECT c FROM MenuCategory c WHERE c.categoryName = :name",
+                            MenuCategory.class
+                    )
+                    .setParameter("name", "Main Courses")
+                    .getSingleResult();
 
+            MenuCategory desserts = em.createQuery("SELECT c FROM MenuCategory c WHERE c.categoryName = :name",
+                            MenuCategory.class
+                    )
+                    .setParameter("name", "Desserts")
+                    .getSingleResult();
 
             // Load Drinks
 
@@ -95,72 +105,72 @@ public class LoadMenuItems {
             // Load A la Carte
 
             // Appetizers
-            em.persist(new MenuItem(alacarte, "Vitlöksbröd",
+            em.persist(new MenuItem(appetizers, "Vitlöksbröd",
                     "Grillat surdegsbröd med vitlökssmör och persilja.", 65, 1));
 
-            em.persist(new MenuItem(alacarte, "Bruschetta",
+            em.persist(new MenuItem(appetizers, "Bruschetta",
                     "Rostat bröd med tomat, basilika och olivolja.", 75, 1));
 
-            em.persist(new MenuItem(alacarte, "Skagenröra",
+            em.persist(new MenuItem(appetizers, "Skagenröra",
                     "Handskalade räkor med majonnäs, dill och citron på toast.", 115, 1));
 
-            em.persist(new MenuItem(alacarte, "Caprese",
+            em.persist(new MenuItem(appetizers, "Caprese",
                     "Buffelmozzarella med tomat, basilika och balsamico.", 95, 1));
 
-            em.persist(new MenuItem(alacarte, "Charkbricka",
+            em.persist(new MenuItem(appetizers, "Charkbricka",
                     "Utvalda italienska charkuterier med oliver och bröd.", 145, 1));
 
-            em.persist(new MenuItem(alacarte, "Friterad halloumi",
+            em.persist(new MenuItem(appetizers, "Friterad halloumi",
                     "Krispig halloumi med chilimajonnäs.", 89, 1));
 
-            em.persist(new MenuItem(alacarte, "Lökringar",
+            em.persist(new MenuItem(appetizers, "Lökringar",
                     "Frasiga lökringar med aioli.", 69, 1));
 
             // Main courses
-            em.persist(new MenuItem(alacarte, "Oxfilé med rödvinssås",
+            em.persist(new MenuItem(mainCourses, "Oxfilé med rödvinssås",
                     "Grillad oxfilé med potatisgratäng och rödvinssås.", 295, 2));
 
-            em.persist(new MenuItem(alacarte, "Entrecôte",
+            em.persist(new MenuItem(mainCourses, "Entrecôte",
                     "Saftig entrecôte med pommes frites och bearnaisesås.", 265, 2));
 
-            em.persist(new MenuItem(alacarte, "Hamburgare Deluxe",
+            em.persist(new MenuItem(mainCourses, "Hamburgare Deluxe",
                     "200g högrevsburgare med cheddar, bacon och tryffelmajonnäs.", 195, 2));
 
-            em.persist(new MenuItem(alacarte, "Caesarsallad med kyckling",
+            em.persist(new MenuItem(mainCourses, "Caesarsallad med kyckling",
                     "Romansallad, grillad kyckling, parmesan och caesardressing.", 175, 2));
 
-            em.persist(new MenuItem(alacarte, "Grillad lax",
+            em.persist(new MenuItem(mainCourses, "Grillad lax",
                     "Grillad laxfilé med hollandaisesås och säsongens grönsaker.", 225, 2));
 
-            em.persist(new MenuItem(alacarte, "Vegetarisk burgare",
+            em.persist(new MenuItem(mainCourses, "Vegetarisk burgare",
                     "Burgare med halloumi, avokado och sötpotatispommes.", 185, 2));
 
-            em.persist(new MenuItem(alacarte, "Plankstek",
+            em.persist(new MenuItem(mainCourses, "Plankstek",
                     "Oxfilé på planka med duchessepotatis och rödvinssky.", 285, 2));
 
-            em.persist(new MenuItem(alacarte, "Moules frites",
+            em.persist(new MenuItem(mainCourses, "Moules frites",
                     "Blåmusslor i vitvinssås med pommes frites.", 210, 2));
 
             // Desserts
-            em.persist(new MenuItem(alacarte, "Crème brûlée",
+            em.persist(new MenuItem(desserts, "Crème brûlée",
                     "Klassisk vaniljcrème med karamelliserat socker.", 95, 3));
 
-            em.persist(new MenuItem(alacarte, "Chokladfondant",
+            em.persist(new MenuItem(desserts, "Chokladfondant",
                     "Varm chokladkaka med rinnande kärna och vaniljglass.", 105, 3));
 
-            em.persist(new MenuItem(alacarte, "Tiramisu",
+            em.persist(new MenuItem(desserts, "Tiramisu",
                     "Italiensk dessert med mascarpone och espresso.", 98, 3));
 
-            em.persist(new MenuItem(alacarte, "Glass med chokladsås",
+            em.persist(new MenuItem(desserts, "Glass med chokladsås",
                     "Tre kulor vaniljglass med varm chokladsås.", 75, 3));
 
-            em.persist(new MenuItem(alacarte, "Cheesecake",
+            em.persist(new MenuItem(desserts, "Cheesecake",
                     "New York cheesecake med bärkompott.", 92, 3));
 
-            em.persist(new MenuItem(alacarte, "Äppelpaj",
+            em.persist(new MenuItem(desserts, "Äppelpaj",
                     "Varm äppelpaj med vaniljsås.", 85, 3));
 
-            em.persist(new MenuItem(alacarte, "Pannacotta",
+            em.persist(new MenuItem(desserts, "Pannacotta",
                     "Vaniljpannacotta med hallonspegel.", 88, 3));
 
         }
