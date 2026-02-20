@@ -43,5 +43,4 @@ public class LunchResource {
 
         return results;
     }
-
 }
