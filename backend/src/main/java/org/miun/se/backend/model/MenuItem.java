@@ -37,7 +37,7 @@ public class MenuItem {
     //Constructors
     protected MenuItem() {}
 
-    public MenuItem(MenuCategory menuCategory, String itemName, String itemDescription, double itemPrice, Integer defaultPriority) {
+    public MenuItem(MenuCategory menuCategory, String itemName, String itemDescription, double itemPrice) {
         this.category = menuCategory;
         this.name = itemName;
         this.description = itemDescription;
