@@ -50,6 +50,12 @@ captures/
 .cxx/
 
 # ====================
+# Node / Web frontend
+# ====================
+node_modules/
+dist/
+
+# ====================
 # Editor temp files
 # ====================
 *~
