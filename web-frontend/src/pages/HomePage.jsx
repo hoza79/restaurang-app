@@ -3,6 +3,7 @@ import Hero from '../components/Hero'
 import LunchSection from '../components/LunchSection'
 import CarteSection from '../components/CarteSection'
 import MusicSection from '../components/MusicSection'
+import EventBlogSection from '../components/EventBlogSection'
 import BookingSection from '../components/BookingSection'
 import Footer from '../components/Footer'
 import '../styles/public.css'
@@ -15,6 +16,7 @@ function HomePage() {
       <LunchSection />
       <CarteSection />
       <MusicSection />
+      <EventBlogSection />
       <BookingSection />
       <Footer />
     </>

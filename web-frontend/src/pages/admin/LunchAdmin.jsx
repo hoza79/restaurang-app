@@ -122,7 +122,7 @@ function LunchAdmin() {
 
         {days.map(day => (
           <div key={day.dayNum}>
-            <h4 style={{ padding: '1.5rem 1.5rem 0.5rem', margin: 0, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <h4 style={{ padding: '1.5rem 1.5rem 0.5rem', margin: 0, borderTop: '1px solid rgba(58,51,44,0.10)' }}>
               {day.label}
             </h4>
             <table className="admin-table">

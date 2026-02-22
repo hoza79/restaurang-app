@@ -118,6 +118,78 @@ export const artists = [
   },
 ];
 
+// mockdata för event-bloggen - tidigare och kommande events
+export const eventBlog = {
+  previous: [
+    {
+      id: 1,
+      artist: 'Sofia Lundgren',
+      genre: 'Soul & R&B',
+      description: 'En magisk kväll med djupa soulvibrationer och kraftfull röst. Gästerna stod upp och applåderade.',
+      date: { day: 7, month: 'Feb' },
+      likes: 24,
+      comments: [
+        { id: 1, author: 'Lisa M.', text: 'Fantastisk kväll, kommer definitivt tillbaka!' },
+        { id: 2, author: 'Henrik P.', text: 'Sofia är alltid en upplevelse. Boka bord i god tid!' },
+      ]
+    },
+    {
+      id: 2,
+      artist: 'Erik Nordin Quartet',
+      genre: 'Jazz',
+      description: 'Klassisk cool jazz med improvisationer som höll publiken hanfored hela kvällen.',
+      date: { day: 1, month: 'Feb' },
+      likes: 17,
+      comments: [
+        { id: 1, author: 'Maria K.', text: 'Bästa jazzen jag hört på länge!' },
+      ]
+    },
+    {
+      id: 3,
+      artist: 'Skogsrå',
+      genre: 'Folkmusik',
+      description: 'Trollsk folkmusik med nyckelharpa och fiol. En hyllning till den svenska naturen.',
+      date: { day: 25, month: 'Jan' },
+      likes: 31,
+      comments: []
+    },
+  ],
+  upcoming: [
+    {
+      id: 4,
+      artist: 'Karin Ström Trio',
+      genre: 'Jazz & Bossa Nova',
+      description: 'Mjuk jazz och brasilianska toner - perfekt för en romantisk valentinskvall. Kl. 19:00.',
+      date: { day: 14, month: 'Feb' },
+      likes: 9,
+      comments: [
+        { id: 1, author: 'Lisa M.', text: 'Ser fram emot det! Bokat bord för oss två.' },
+        { id: 2, author: 'Henrik P.', text: 'Karin Ström är alltid en upplevelse. Köper biljett nu!' },
+      ]
+    },
+    {
+      id: 5,
+      artist: 'Folkton',
+      genre: 'Svensk Folkmusik',
+      description: 'Nyckelharpa, fiol och sång. Traditionella visor i modern tappning. Kl. 19:30.',
+      date: { day: 15, month: 'Feb' },
+      likes: 5,
+      comments: []
+    },
+    {
+      id: 6,
+      artist: 'Blue River Band',
+      genre: 'Blues & Country',
+      description: 'Akustisk blues med storytelling. Perfekt för en avslappnad fredagskvall. Kl. 20:00.',
+      date: { day: 21, month: 'Feb' },
+      likes: 12,
+      comments: [
+        { id: 1, author: 'Anna S.', text: 'Blues på en fredag är perfekt!' },
+      ]
+    },
+  ]
+};
+
 export const bookings = [
   { id: 1, table: 1, name: 'Eriksson', guests: 4, time: '18:00', status: 'booked' },
   { id: 2, table: 2, name: 'Lindqvist', guests: 2, time: '19:00', status: 'booked' },

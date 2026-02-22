@@ -168,6 +168,7 @@
     background: var(--light-section);
     position: relative;
     border-top: 3px solid var(--gold-on-light);
+    border-bottom: 3px solid var(--gold-on-light);
     padding: 7rem 2rem;
 }
 
@@ -355,6 +356,7 @@
     background: var(--light-section);
     position: relative;
     border-top: 3px solid var(--gold-on-light);
+    border-bottom: 3px solid var(--gold-on-light);
     padding: 7rem 2rem;
 }
 
@@ -438,23 +440,185 @@
     color: var(--text-muted-on-light);
 }
 
-/* Bokning */
-.booking {
+/* Event-blogg */
+.event-blog {
     background: var(--charcoal);
-    position: relative;
     padding: 7rem 2rem;
-    color: var(--text-light);
 }
 
-.booking::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(to right, transparent, var(--gold-dim), transparent);
+.event-blog .section-label { color: rgba(255,255,255,0.4); }
+.event-blog .section-title { color: #fff; }
+.event-blog .section-title em { color: var(--gold); }
+.event-blog .section-intro { color: rgba(255,255,255,0.5); }
+.event-blog .gold-line { background: var(--gold); }
+
+.event-blog-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-top: 3rem;
 }
+
+.event-column-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 1.5rem;
+}
+
+.event-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: background 0.2s;
+}
+
+.event-card:hover { background: rgba(255,255,255,0.07); }
+
+.event-card-top {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 1.2rem;
+}
+
+.event-date-block {
+    text-align: center;
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 0.6rem 0.5rem;
+    align-self: start;
+}
+
+.event-day {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+}
+
+.event-month {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-top: 0.2rem;
+}
+
+.event-info h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: #fff;
+    margin-bottom: 0.3rem;
+}
+
+.event-genre {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+}
+
+.event-desc {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.5;
+}
+
+.event-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.event-like-btn,
+.event-comment-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.event-like-btn:hover { color: #e08080; }
+.event-like-btn.liked { color: #e08080; }
+.event-comment-btn:hover { color: rgba(255,255,255,0.8); }
+
+.event-comments {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.event-comment {
+    margin-bottom: 0.8rem;
+    font-size: 0.85rem;
+}
+
+.comment-author {
+    color: var(--gold);
+    font-size: 0.75rem;
+    margin-right: 0.5rem;
+}
+
+.comment-text {
+    color: rgba(255,255,255,0.6);
+}
+
+.comment-input-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.comment-input-row input {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+}
+
+.comment-input-row input::placeholder { color: rgba(255,255,255,0.25); }
+
+.comment-input-row button {
+    background: none;
+    border: 1px solid rgba(201,168,76,0.4);
+    color: var(--gold);
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.comment-input-row button:hover { background: rgba(201,168,76,0.1); }
+
+@media (max-width: 768px) {
+    .event-blog-columns { grid-template-columns: 1fr; }
+}
+
+/* Bokning */
+.booking {
+    background: var(--light-section);
+    position: relative;
+    border-top: 3px solid var(--gold-on-light);
+    padding: 7rem 2rem;
+}
+
+.booking .section-label { color: var(--text-muted-on-light); }
+.booking .section-title { color: var(--text-on-light); }
+.booking .section-title em { color: var(--gold-on-light); }
+.booking .section-intro { color: var(--text-muted-on-light); }
+.booking .gold-line { background: var(--gold-on-light); }
 
 .booking-layout {
     display: grid;
@@ -467,13 +631,13 @@
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.5rem;
     font-weight: 300;
-    color: var(--cream);
+    color: var(--text-on-light);
     margin-bottom: 1rem;
 }
 
 .booking-left p {
     font-size: 0.9rem;
-    color: var(--text-muted);
+    color: var(--text-muted-on-light);
     margin-bottom: 2rem;
     line-height: 1.8;
 }
@@ -482,24 +646,24 @@
     display: flex;
     justify-content: space-between;
     padding: 1rem 0;
-    border-bottom: 1px solid rgba(201, 168, 76, 0.06);
+    border-bottom: 1px solid rgba(58, 51, 44, 0.08);
     font-size: 0.88rem;
 }
 
-.info-item .label { color: var(--warm-gray); }
-.info-item .value { color: var(--cream); }
+.info-item .label { color: var(--text-muted-on-light); }
+.info-item .value { color: var(--text-on-light); }
 
 .booking-form {
     padding: 2.5rem;
-    border: 1px solid rgba(201, 168, 76, 0.1);
-    background: var(--dark-slate);
+    border: 1px solid rgba(168, 135, 46, 0.2);
+    background: #fff;
 }
 
 .booking-form h3 {
     font-family: 'Cormorant Garamond', serif;
     font-weight: 300;
     font-size: 1.3rem;
-    color: var(--cream);
+    color: var(--text-on-light);
     margin-bottom: 2rem;
     text-align: center;
 }
@@ -513,7 +677,7 @@
     font-size: 0.68rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--warm-gray);
+    color: var(--text-muted-on-light);
     margin-bottom: 0.5rem;
 }
 
@@ -525,9 +689,9 @@
     font-family: 'Montserrat', sans-serif;
     font-weight: 300;
     font-size: 0.9rem;
-    border: 1px solid rgba(201, 168, 76, 0.12);
-    background: var(--charcoal);
-    color: var(--text-light);
+    border: 1px solid rgba(168, 135, 46, 0.2);
+    background: var(--light-section);
+    color: var(--text-on-light);
     outline: none;
     transition: border-color 0.3s;
 }
@@ -535,12 +699,12 @@
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-    border-color: var(--gold-dim);
+    border-color: var(--gold-on-light);
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-    color: var(--warm-gray);
+    color: var(--text-muted-on-light);
 }
 
 .form-row {
@@ -558,16 +722,16 @@
     letter-spacing: 0.25em;
     text-transform: uppercase;
     background: transparent;
-    color: var(--gold);
-    border: 1px solid rgba(201, 168, 76, 0.4);
+    color: var(--gold-on-light);
+    border: 1px solid rgba(168, 135, 46, 0.4);
     cursor: pointer;
     transition: all 0.4s;
     margin-top: 0.5rem;
 }
 
 .btn-book:hover {
-    background: var(--gold);
-    color: var(--charcoal);
+    background: var(--gold-on-light);
+    color: #fff;
 }
 
 /* Footer */

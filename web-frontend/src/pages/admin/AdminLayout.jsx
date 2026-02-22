@@ -10,6 +10,7 @@ function AdminLayout() {
     { to: '/admin/lunch', icon: '\u{1F374}', label: 'Lunchmeny' },
     { to: '/admin/carte', icon: '\u{1F37D}', label: 'À la carte' },
     { to: '/admin/musik', icon: '\u{1F3B5}', label: 'Musik' },
+    { to: '/admin/events', icon: '\u{1F4F8}', label: 'Events' },
     { to: '/admin/bokningar', icon: '\u{1F4C5}', label: 'Bokningar' },
   ]
 
