@@ -26,13 +26,23 @@ public class Shift {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "shift_status", nullable = false)
-    private ShiftStatus shiftStatus = ShiftStatus.SCHEDULED;
+    private ShiftStatus shiftStatus;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    // Constructors
+    protected Shift() {}
+
+    public Shift(Employee employee, LocalDateTime startTime, LocalDateTime endTime) {
+        this.employee = employee;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.shiftStatus = ShiftStatus.SCHEDULED;
+    }
 
     // Lifecycle callbacks
 
@@ -49,7 +59,7 @@ public class Shift {
         updatedAt = LocalDateTime.now();
     }
 
-    // Validate time method
+    // Validate startTime, endTime method
     private void validateTimes() {
         if (startTime == null || endTime == null) {
             throw new IllegalArgumentException("Start time and end time must be set");

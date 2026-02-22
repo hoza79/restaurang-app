@@ -27,7 +27,7 @@ public class MenuCategory {
     private LocalDateTime updatedAt;
 
     //Constructors
-    public MenuCategory() {}
+    protected MenuCategory() {}
 
     public MenuCategory(String categoryName) {
         this.categoryName = categoryName;

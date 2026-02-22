@@ -23,13 +23,10 @@ public class MenuItem {
     private String description;
 
     @Column(name = "price", nullable = false)
-    private Double price;
-
-    @Column(name = "default_priority", nullable = false)
-    private Integer defaultPriority = 0;
+    private double price;
 
     @Column(name = "available", nullable = false)
-    private Boolean available = true;
+    private Boolean available;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -38,15 +35,14 @@ public class MenuItem {
     private LocalDateTime updatedAt;
 
     //Constructors
-    public MenuItem() {
-        // Default no-arg constructor required by JPA
-    }
+    protected MenuItem() {}
 
     public MenuItem(MenuCategory menuCategory, String itemName, String itemDescription, double itemPrice) {
         this.category = menuCategory;
         this.name = itemName;
         this.description = itemDescription;
         this.price = itemPrice;
+        this.available = true;
     }
 
     // Lifecycle callbacks
@@ -76,11 +72,8 @@ public class MenuItem {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
-
-    public Integer getDefaultPriority() { return defaultPriority; }
-    public void setDefaultPriority(Integer defaultPriority) { this.defaultPriority = defaultPriority; }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
 
     public Boolean getAvailable() { return available; }
     public void setAvailable(Boolean available) { this.available = available; }
