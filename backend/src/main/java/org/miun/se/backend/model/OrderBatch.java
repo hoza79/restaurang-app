@@ -37,8 +37,6 @@ public class OrderBatch {
     @OneToMany(mappedBy = "orderBatch", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    private Boolean serveTogether = false;
-
     //Constructors
     protected OrderBatch() {}
 
@@ -72,38 +70,12 @@ public class OrderBatch {
 
         orderItems.add(item);
 
-        // serveTogether: set appliedPriority to lowest priority among all items
-        if (serveTogether) {
-            Integer lowest = orderItems.stream()
-                    .mapToInt(OrderItem::getAppliedPriority)
-                    .min()
-                    .orElse(item.getAppliedPriority());
-            orderItems.forEach(i -> i.setAppliedPriority(lowest));
-        }
-
         // Notify the parent order, recalculate totalPrice
         if (customerOrder != null) {
             customerOrder.recalculateTotalPrice();
         }
 
         return item;
-    }
-
-    public void setServeTogether(Boolean serveTogether) {
-        this.serveTogether = serveTogether;
-
-        // serveTogether : set appliedPriority to lowest priority among all items
-        if (serveTogether) {
-            Integer lowest = orderItems.stream()
-                    .mapToInt(OrderItem::getAppliedPriority)
-                    .min()
-                    .orElse(0);
-            orderItems.forEach(i -> i.setAppliedPriority(lowest));
-        }
-        else {
-            // Reset all items to their menu item's default priority
-            orderItems.forEach(i -> i.setAppliedPriority(i.getMenuItem().getDefaultPriority()));
-        }
     }
 
     //Getters and setters

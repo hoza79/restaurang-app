@@ -28,22 +28,24 @@ public class LoadLunchItems {
             .setParameter("name", "Lunch")
             .getSingleResult();
 
-            em.persist(new MenuItem(lunch, "Köttbullar med potatismos", "Skafferiets hemlagade köttbullar med potatismos och lingonsylt från urskogen.", 100));
-            em.persist(new MenuItem(lunch, "Renskav med potatis", "Lyxig renskav a la Anton med smörslungad potatis och ljuvlig gräddsås.", 120));
-            em.persist(new MenuItem(lunch, "Potatis och lök soppa", "Köksmästarens egna legendariska potatis och löksoppa med äkta franskt ursprung.", 80));
-            em.persist(new MenuItem(lunch, "Kycklinggryta med ris", "Krämig kycklinggryta med paprika och serveras med jasminris.", 105));
-            em.persist(new MenuItem(lunch, "Pasta bolognese", "Pasta med långkokt köttfärssås och riven ost.", 95));
-            em.persist(new MenuItem(lunch, "Panerad torsk med potatis", "Panerad torskfilé med kokt potatis och remouladsås.", 115));
-            em.persist(new MenuItem(lunch, "Lasagne al forno", "Klassisk lasagne med bechamel och tomatsås.", 110));
-            em.persist(new MenuItem(lunch, "Vegetarisk curry", "Mild curry med kikärtor, blomkål och ris.", 90));
-            em.persist(new MenuItem(lunch, "Fläskfilé med pepparsås", "Stekt fläskfilé med ugnsrostad potatis och pepparsås.", 125));
-            em.persist(new MenuItem(lunch, "Fiskgratäng", "Vit fisk i dill- och citronsås med potatismos.", 120));
-            em.persist(new MenuItem(lunch, "Chili con carne", "Mustig chili på högrev, bönor och ris.", 100));
-            em.persist(new MenuItem(lunch, "Svamprisotto", "Krämig risotto med champinjoner och parmesan.", 98));
-            em.persist(new MenuItem(lunch, "Kåldolmar med sås", "Kåldolmar med gräddsås, potatis och lingon.", 112));
-            em.persist(new MenuItem(lunch, "Kyckling schnitzel", "Kyckling schnitzel med rostad potatis och örtsås.", 108));
-            em.persist(new MenuItem(lunch, "Linsgryta med bröd", "Varm linsgryta med tomat, vitlök och nybakat bröd.", 85));
+            em.persist(new MenuItem(lunch, "KÃ¶ttbullar med potatismos", "Skafferiets hemlagade kÃ¶ttbullar med potatismos och lingonsylt frÃ¥n urskogen.", 100, 2));
+            em.persist(new MenuItem(lunch, "Renskav med potatis", "Lyxig renskav a la Anton med smÃ¶rslungad potatis och ljuvlig grÃ¤ddsÃ¥s.", 120, 2));
+            em.persist(new MenuItem(lunch, "Potatis och lÃ¶k soppa", "KÃ¶ksmÃ¤starens egna legendariska potatis och lÃ¶ksoppa med Ã¤kta franskt ursprung.", 80, 2));
+            em.persist(new MenuItem(lunch, "Kycklinggryta med ris", "KrÃ¤mig kycklinggryta med paprika och serveras med jasminris.", 105, 2));
+            em.persist(new MenuItem(lunch, "Pasta bolognese", "Pasta med lÃ¥ngkokt kÃ¶ttfÃ¤rssÃ¥s och riven ost.", 95, 2));
+            em.persist(new MenuItem(lunch, "Panerad torsk med potatis", "Panerad torskfilÃ© med kokt potatis och remouladsÃ¥s.", 115, 2));
+            em.persist(new MenuItem(lunch, "Lasagne al forno", "Klassisk lasagne med bechamel och tomatsÃ¥s.", 110, 2));
+            em.persist(new MenuItem(lunch, "Vegetarisk curry", "Mild curry med kikÃ¤rtor, blomkÃ¥l och ris.", 90, 2));
+            em.persist(new MenuItem(lunch, "FlÃ¤skfilÃ© med pepparsÃ¥s", "Stekt flÃ¤skfilÃ© med ugnsrostad potatis och pepparsÃ¥s.", 125, 2));
+            em.persist(new MenuItem(lunch, "FiskgratÃ¤ng", "Vit fisk i dill- och citronsÃ¥s med potatismos.", 120, 2));
+            em.persist(new MenuItem(lunch, "Chili con carne", "Mustig chili pÃ¥ hÃ¶grev, bÃ¶nor och ris.", 100, 2));
+            em.persist(new MenuItem(lunch, "Svamprisotto", "KrÃ¤mig risotto med champinjoner och parmesan.", 98, 2));
+            em.persist(new MenuItem(lunch, "KÃ¥ldolmar med sÃ¥s", "KÃ¥ldolmar med grÃ¤ddsÃ¥s, potatis och lingon.", 112, 2));
+            em.persist(new MenuItem(lunch, "Kyckling schnitzel", "Kyckling schnitzel med rostad potatis och Ã¶rtsÃ¥s.", 108, 2));
+            em.persist(new MenuItem(lunch, "Linsgryta med brÃ¶d", "Varm linsgryta med tomat, vitlÃ¶k och nybakat brÃ¶d.", 85, 2));
 
         }
     }
 }
+
+
