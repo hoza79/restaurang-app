@@ -3,11 +3,19 @@ package org.miun.se.backend.rest;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.miun.se.backend.model.LunchAvailability;
+import org.miun.se.backend.DTO.LunchAddDto;
 import org.miun.se.backend.DTO.MenuItemDto;
+import org.miun.se.backend.model.LunchAvailability;
+import org.miun.se.backend.model.MenuCategory;
+import org.miun.se.backend.model.MenuItem;
+import jakarta.transaction.Transactional;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +24,7 @@ import java.util.Map;
 
 
 @Path("/lunch")
+@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 
 public class LunchResource {
@@ -27,7 +36,11 @@ public class LunchResource {
     @GET
     public Map<String, Object> getWeekMeals(){
         List<LunchAvailability> meals = em.createQuery(
-                "SELECT item FROM LunchAvailability item " + "JOIN FETCH item.menuItem " + "WHERE item.menuItem.category.categoryName ='Lunch'" + "ORDER BY item.availableDate", LunchAvailability.class)
+                "SELECT item FROM LunchAvailability item " +
+                        "JOIN FETCH item.menuItem " +
+                        "WHERE item.menuItem.category.categoryName = 'Lunch' " +
+                        "ORDER BY item.availableDate",
+                LunchAvailability.class)
                 .getResultList();
 
         List<MenuItemDto> itemsDto = new ArrayList<>();
@@ -42,5 +55,32 @@ public class LunchResource {
         results.put("Items", itemsDto);
 
         return results;
+    }
+
+    @POST
+    @Transactional
+    public Response addLunch(LunchAddDto lunchDto){
+
+        MenuCategory lunch = em.createQuery(
+                "SELECT category FROM MenuCategory category WHERE category.categoryName = :name",
+                MenuCategory.class)
+                .setParameter("name","Lunch")
+                .getSingleResult();
+
+        MenuItem item = new MenuItem(
+                lunch,
+                lunchDto.name(),
+                lunchDto.description(),
+                lunchDto.price()
+        );
+
+        em.persist(item);
+        LunchAvailability availability = new LunchAvailability(
+                item,
+                lunchDto.availableDate()
+        );
+        em.persist(availability);
+
+        return Response.status(Response.Status.CREATED).build();
     }
 }
