@@ -1,52 +1,50 @@
 import { useState, useEffect } from 'react'
-import { getLunchMenu } from '../../api/menuApi'
-
-const DAY_NAMES = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag']
+import { getLunchMenu, addLunchItem } from '../../api/menuApi'
 
 function LunchAdmin() {
   const [days, setDays] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
-  const [newItem, setNewItem] = useState({ name: '', description: '', price: '', dayNum: 1 })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [newItem, setNewItem] = useState({ name: '', description: '', price: '', availableDate: '' })
 
+  // hämtar menyn när sidan laddas
   useEffect(() => {
+    fetchMenu()
+  }, [])
+
+  function fetchMenu() {
+    setLoading(true)
     getLunchMenu()
       .then(data => {
         setDays(data.days)
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [])
+  }
 
   if (loading) return <p>Laddar...</p>
 
-  const handleAdd = () => {
-    if (!newItem.name) return
-    const dayNum = Number(newItem.dayNum)
-    const item = {
-      id: Date.now(),
-      name: newItem.name,
-      description: newItem.description,
-      price: parseInt(newItem.price) || 0,
-      available: true,
+  // skickar ny rätt till backend och laddar om menyn
+  const handleAdd = async () => {
+    if (!newItem.name || !newItem.availableDate) return
+    setSaving(true)
+    setError(null)
+    try {
+      await addLunchItem(newItem)
+      setNewItem({ name: '', description: '', price: '', availableDate: '' })
+      setShowAddForm(false)
+      fetchMenu()
+    } catch (e) {
+      setError('Kunde inte spara rätten, försök igen')
+    } finally {
+      setSaving(false)
     }
-
-    setDays(prev => {
-      const existing = prev.find(d => d.dayNum === dayNum)
-      if (existing) {
-        return prev.map(d =>
-          d.dayNum === dayNum ? { ...d, items: [...d.items, item] } : d
-        )
-      }
-      return [...prev, { dayNum, label: DAY_NAMES[dayNum - 1], items: [item] }].sort(
-        (a, b) => a.dayNum - b.dayNum
-      )
-    })
-    setNewItem({ name: '', description: '', price: '', dayNum: 1 })
-    setShowAddForm(false)
   }
 
   const handleDelete = (dayNum, itemId) => {
+    // tar bort lokalt, inget delete-API finns ännu
     setDays(prev =>
       prev
         .map(d =>
@@ -60,9 +58,6 @@ function LunchAdmin() {
     <>
       <div className="main-header">
         <h1><em>Lunchmeny</em></h1>
-        <button className="btn btn-gold" onClick={() => alert('Sparad! (mockup)')}>
-          Spara alla ändringar
-        </button>
       </div>
 
       <div className="card">
@@ -77,15 +72,12 @@ function LunchAdmin() {
           <div className="inline-form">
             <div className="form-row-3">
               <div>
-                <label>Dag</label>
-                <select
-                  value={newItem.dayNum}
-                  onChange={(e) => setNewItem({ ...newItem, dayNum: e.target.value })}
-                >
-                  {DAY_NAMES.map((name, i) => (
-                    <option key={i + 1} value={i + 1}>{name}</option>
-                  ))}
-                </select>
+                <label>Datum</label>
+                <input
+                  type="date"
+                  value={newItem.availableDate}
+                  onChange={(e) => setNewItem({ ...newItem, availableDate: e.target.value })}
+                />
               </div>
               <div>
                 <label>Namn</label>
@@ -116,9 +108,12 @@ function LunchAdmin() {
                 style={{ width: '100%' }}
               />
             </div>
+            {error && <p style={{ color: 'red', margin: '0.5rem 0' }}>{error}</p>}
             <div className="form-actions">
               <button className="btn btn-outline btn-sm" onClick={() => setShowAddForm(false)}>Avbryt</button>
-              <button className="btn btn-gold btn-sm" onClick={handleAdd}>Lägg till</button>
+              <button className="btn btn-gold btn-sm" onClick={handleAdd} disabled={saving}>
+                {saving ? 'Sparar...' : 'Lägg till'}
+              </button>
             </div>
           </div>
         )}
@@ -142,7 +137,6 @@ function LunchAdmin() {
                     <td>{item.description}</td>
                     <td>{item.price} kr</td>
                     <td className="actions">
-                      <button className="btn btn-outline btn-sm">Redigera</button>
                       <button className="btn btn-danger btn-sm" onClick={() => handleDelete(day.dayNum, item.id)}>Ta bort</button>
                     </td>
                   </tr>

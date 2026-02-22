@@ -2,6 +2,13 @@ import { lunchWeek, carteMenu, artists, bookings } from '../data/mockData';
 
 const DAY_NAMES = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
 
+// räknar ut dagnamn från ett ISO-datum ("2026-02-23" → "Måndag")
+function getDayLabel(dateStr) {
+  const date = new Date(dateStr + 'T12:00:00');
+  const day = date.getDay(); // 0=sön, 1=mån ... 5=fre, 6=lör
+  return DAY_NAMES[day - 1] || dateStr;
+}
+
 // gör om API-svaret till dagslista
 function parseLunchData(data) {
   const byDay = {};
@@ -18,12 +25,11 @@ function parseLunchData(data) {
   }
 
   return Object.keys(byDay)
-    .map(Number)
     .sort()
-    .map(dayNum => ({
-      dayNum,
-      label: DAY_NAMES[dayNum - 1] || `Dag ${dayNum}`,
-      items: byDay[dayNum],
+    .map((dateStr, i) => ({
+      dayNum: i + 1,
+      label: getDayLabel(dateStr),
+      items: byDay[dateStr],
     }));
 }
 
@@ -75,4 +81,15 @@ export async function createBooking(data) {
   // inget API ännu
   console.log('Booking submitted (mock):', data);
   return { success: true };
+}
+
+// skickar ny lunchrätt till backend
+// availableDate ska vara "YYYY-MM-DD", t.ex. "2026-02-24"
+export async function addLunchItem({ name, description, price, availableDate }) {
+  const res = await fetch('/api/lunch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, description, price: parseFloat(price), availableDate }),
+  })
+  if (!res.ok) throw new Error('Kunde inte lägga till rätten')
 }
