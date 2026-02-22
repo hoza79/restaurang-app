@@ -25,9 +25,6 @@ public class MenuItem {
     @Column(name = "price", nullable = false)
     private double price;
 
-    @Column(name = "default_priority", nullable = false)
-    private Integer defaultPriority;
-
     @Column(name = "available", nullable = false)
     private Boolean available;
 
@@ -40,21 +37,18 @@ public class MenuItem {
     //Constructors
     protected MenuItem() {}
 
-    public MenuItem(MenuCategory menuCategory, String itemName, String itemDescription, double itemPrice, Integer defaultPriority) {
+    public MenuItem(MenuCategory menuCategory, String itemName, String itemDescription, double itemPrice) {
         this.category = menuCategory;
         this.name = itemName;
         this.description = itemDescription;
         this.price = itemPrice;
-        this.defaultPriority = defaultPriority;
+        this.available = true;
     }
 
     // Lifecycle callbacks
 
     @PrePersist
     protected void onCreate() {
-        if(available == null) {
-            available = true;
-        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
@@ -80,9 +74,6 @@ public class MenuItem {
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
-
-    public Integer getDefaultPriority() { return defaultPriority; }
-    public void setDefaultPriority(Integer defaultPriority) { this.defaultPriority = defaultPriority; }
 
     public Boolean getAvailable() { return available; }
     public void setAvailable(Boolean available) { this.available = available; }

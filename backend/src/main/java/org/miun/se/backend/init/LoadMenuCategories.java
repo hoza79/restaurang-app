@@ -20,7 +20,9 @@ public class LoadMenuCategories {
                 .getResultList().isEmpty()) {
 
             em.persist(new MenuCategory("Lunch"));
-            em.persist(new MenuCategory("A La Carte"));
+            em.persist(new MenuCategory("Appetizers"));
+            em.persist(new MenuCategory("Main Courses"));
+            em.persist(new MenuCategory("Desserts"));
             em.persist(new MenuCategory("Drinks"));
         }
     }

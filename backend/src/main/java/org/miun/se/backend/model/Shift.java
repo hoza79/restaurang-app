@@ -34,13 +34,20 @@ public class Shift {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    // Constructors
+    protected Shift() {}
+
+    public Shift(Employee employee, LocalDateTime startTime, LocalDateTime endTime) {
+        this.employee = employee;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.shiftStatus = ShiftStatus.SCHEDULED;
+    }
+
     // Lifecycle callbacks
 
     @PrePersist
     protected void onCreate() {
-        if(shiftStatus == null) {
-            shiftStatus = ShiftStatus.SCHEDULED;
-        }
         validateTimes();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
@@ -50,15 +57,6 @@ public class Shift {
     protected void onUpdate() {
         validateTimes();
         updatedAt = LocalDateTime.now();
-    }
-
-    // Constructors
-    protected Shift() {}
-
-    public Shift(Employee employee, LocalDateTime startTime, LocalDateTime endTime) {
-        this.employee = employee;
-        this.startTime = startTime;
-        this.endTime = endTime;
     }
 
     // Validate startTime, endTime method

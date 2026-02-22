@@ -44,6 +44,17 @@ public class Employee {
     @OneToMany(mappedBy = "employee", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<CustomerOrder> orders = new ArrayList<>();
 
+    // Constructors
+    protected Employee() {}
+
+    public Employee(String firstName, String lastName, EmployeeRole role, String phoneNumber, String emailAddress) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.role = role;
+        this.phoneNumber = phoneNumber;
+        this.emailAddress = emailAddress;
+    }
+
     // Lifecycle callbacks
     @PrePersist
     protected void onCreate() {
@@ -54,17 +65,6 @@ public class Employee {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    // Constructors
-    protected Employee() {}
-
-    public Employee(String firstName, String lastName, EmployeeRole role, String phoneNumber, String emailAddress) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.role = role;
-        this.phoneNumber = phoneNumber;
-        this.emailAddress = emailAddress;
     }
 
     // Getters and setters
