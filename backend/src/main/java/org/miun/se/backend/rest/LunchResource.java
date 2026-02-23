@@ -17,7 +17,7 @@ import org.miun.se.backend.model.MenuItem;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.PathParam;
-
+import jakarta.ws.rs.PUT;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -106,6 +106,41 @@ public class LunchResource {
                 .setParameter("id", menuItemId)
                 .executeUpdate();
         em.remove(lunchMeal);
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("/{itemId}")
+    @Transactional
+    public Response editLunch(@PathParam("itemId") Integer itemId, LunchAddDto lunchDto){
+        MenuItem lunchMeal;
+        try {
+            lunchMeal = em.createQuery(
+                    "SELECT meal FROM MenuItem meal " + "JOIN FETCH meal.category category " +
+                    "WHERE meal.menuItemId = :id AND category.categoryName = 'Lunch'",
+                    MenuItem.class).setParameter("id", itemId)
+                    .getSingleResult();
+
+        } catch (Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        lunchMeal.setName(lunchDto.name());
+        lunchMeal.setPrice(lunchDto.price());
+        lunchMeal.setDescription(lunchDto.description());
+
+        LunchAvailability lunch;
+        try {
+            lunch = em.createQuery(
+                    "SELECT lunch FROM LunchAvailability lunch WHERE lunch.menuItem.menuItemId = :id",
+                    LunchAvailability.class).setParameter("id", itemId)
+                    .getSingleResult();
+
+
+        }  catch(Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        lunch.setAvailableDate(lunchDto.availableDate());
         return Response.ok().build();
     }
 }
