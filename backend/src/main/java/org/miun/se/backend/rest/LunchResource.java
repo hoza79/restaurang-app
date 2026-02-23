@@ -15,6 +15,8 @@ import org.miun.se.backend.model.LunchAvailability;
 import org.miun.se.backend.model.MenuCategory;
 import org.miun.se.backend.model.MenuItem;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.PathParam;
 
 
 import java.util.ArrayList;
@@ -82,5 +84,28 @@ public class LunchResource {
         em.persist(availability);
 
         return Response.status(Response.Status.CREATED).build();
+    }
+
+
+    @DELETE
+    @Path("/{itemId}")
+    @Transactional
+    public Response deleteLunch(@PathParam("itemId") Integer menuItemId) {
+        MenuItem lunchMeal;
+        try {
+            lunchMeal = em.createQuery(
+                            "SELECT meal FROM MenuItem meal " + "JOIN FETCH meal.category category "
+                                    + "WHERE meal.menuItemId = :id AND category.categoryName = 'Lunch'",
+                            MenuItem.class).setParameter("id", menuItemId)
+                    .getSingleResult();
+        }catch (Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        em.createQuery("DELETE FROM LunchAvailability row WHERE row.menuItem.menuItemId = :id")
+                .setParameter("id", menuItemId)
+                .executeUpdate();
+        em.remove(lunchMeal);
+        return Response.ok().build();
     }
 }
