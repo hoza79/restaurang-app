@@ -10,7 +10,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.miun.se.backend.DTO.LunchAddDto;
-import org.miun.se.backend.DTO.MenuItemDto;
+import org.miun.se.backend.DTO.MenuLunchItemDto;
 import org.miun.se.backend.model.LunchAvailability;
 import org.miun.se.backend.model.MenuCategory;
 import org.miun.se.backend.model.MenuItem;
@@ -43,9 +43,9 @@ public class LunchResource {
                 LunchAvailability.class)
                 .getResultList();
 
-        List<MenuItemDto> itemsDto = new ArrayList<>();
+        List<MenuLunchItemDto> itemsDto = new ArrayList<>();
         for(LunchAvailability meal : meals){
-            MenuItemDto mealDto = new MenuItemDto(meal.getMenuItem().getName(), meal.getMenuItem().getMenuItemId(),
+            MenuLunchItemDto mealDto = new MenuLunchItemDto(meal.getMenuItem().getName(), meal.getMenuItem().getMenuItemId(),
                     meal.getMenuItem().getDescription(), meal.getMenuItem().getPrice(), meal.getMenuItem().getAvailable(), meal.getAvailableDate());
             itemsDto.add(mealDto);
         }

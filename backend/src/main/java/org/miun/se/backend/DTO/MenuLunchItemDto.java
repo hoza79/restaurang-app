@@ -2,7 +2,7 @@ package org.miun.se.backend.DTO;
 
 import java.time.LocalDate;
 
-public record MenuItemDto (
+public record MenuLunchItemDto (
 
     String name,
     Integer menuItemId,
