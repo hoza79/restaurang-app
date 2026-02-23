@@ -10,12 +10,14 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.miun.se.backend.DTO.LunchAddDto;
-import org.miun.se.backend.DTO.MenuItemDto;
+import org.miun.se.backend.DTO.MenuLunchItemDto;
 import org.miun.se.backend.model.LunchAvailability;
 import org.miun.se.backend.model.MenuCategory;
 import org.miun.se.backend.model.MenuItem;
 import jakarta.transaction.Transactional;
-
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.PUT;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,9 +45,9 @@ public class LunchResource {
                 LunchAvailability.class)
                 .getResultList();
 
-        List<MenuItemDto> itemsDto = new ArrayList<>();
+        List<MenuLunchItemDto> itemsDto = new ArrayList<>();
         for(LunchAvailability meal : meals){
-            MenuItemDto mealDto = new MenuItemDto(meal.getMenuItem().getName(), meal.getMenuItem().getMenuItemId(),
+            MenuLunchItemDto mealDto = new MenuLunchItemDto(meal.getMenuItem().getName(), meal.getMenuItem().getMenuItemId(),
                     meal.getMenuItem().getDescription(), meal.getMenuItem().getPrice(), meal.getMenuItem().getAvailable(), meal.getAvailableDate());
             itemsDto.add(mealDto);
         }
@@ -82,5 +84,63 @@ public class LunchResource {
         em.persist(availability);
 
         return Response.status(Response.Status.CREATED).build();
+    }
+
+
+    @DELETE
+    @Path("/{itemId}")
+    @Transactional
+    public Response deleteLunch(@PathParam("itemId") Integer menuItemId) {
+        MenuItem lunchMeal;
+        try {
+            lunchMeal = em.createQuery(
+                            "SELECT meal FROM MenuItem meal " + "JOIN FETCH meal.category category "
+                                    + "WHERE meal.menuItemId = :id AND category.categoryName = 'Lunch'",
+                            MenuItem.class).setParameter("id", menuItemId)
+                    .getSingleResult();
+        }catch (Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        em.createQuery("DELETE FROM LunchAvailability row WHERE row.menuItem.menuItemId = :id")
+                .setParameter("id", menuItemId)
+                .executeUpdate();
+        em.remove(lunchMeal);
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("/{itemId}")
+    @Transactional
+    public Response editLunch(@PathParam("itemId") Integer itemId, LunchAddDto lunchDto){
+        MenuItem lunchMeal;
+        try {
+            lunchMeal = em.createQuery(
+                    "SELECT meal FROM MenuItem meal " + "JOIN FETCH meal.category category " +
+                    "WHERE meal.menuItemId = :id AND category.categoryName = 'Lunch'",
+                    MenuItem.class).setParameter("id", itemId)
+                    .getSingleResult();
+
+        } catch (Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        lunchMeal.setName(lunchDto.name());
+        lunchMeal.setPrice(lunchDto.price());
+        lunchMeal.setDescription(lunchDto.description());
+
+        LunchAvailability lunch;
+        try {
+            lunch = em.createQuery(
+                    "SELECT lunch FROM LunchAvailability lunch WHERE lunch.menuItem.menuItemId = :id",
+                    LunchAvailability.class).setParameter("id", itemId)
+                    .getSingleResult();
+
+
+        }  catch(Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        lunch.setAvailableDate(lunchDto.availableDate());
+        return Response.ok().build();
     }
 }
