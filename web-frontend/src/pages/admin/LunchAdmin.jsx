@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLunchMenu, addLunchItem } from '../../api/menuApi'
+import { getLunchMenu, addLunchItem, deleteLunchItem, updateLunchItem } from '../../api/menuApi'
 
 function LunchAdmin() {
   const [days, setDays] = useState([])
@@ -8,8 +8,10 @@ function LunchAdmin() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [newItem, setNewItem] = useState({ name: '', description: '', price: '', availableDate: '' })
+  // håller reda på vilken rad som redigeras
+  const [editingId, setEditingId] = useState(null)
+  const [editValues, setEditValues] = useState({})
 
-  // hämtar menyn när sidan laddas
   useEffect(() => {
     fetchMenu()
   }, [])
@@ -36,22 +38,44 @@ function LunchAdmin() {
       setNewItem({ name: '', description: '', price: '', availableDate: '' })
       setShowAddForm(false)
       fetchMenu()
-    } catch (e) {
+    } catch {
       setError('Kunde inte spara rätten, försök igen')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleDelete = (dayNum, itemId) => {
-    // tar bort lokalt, inget delete-API finns ännu
-    setDays(prev =>
-      prev
-        .map(d =>
-          d.dayNum === dayNum ? { ...d, items: d.items.filter(i => i.id !== itemId) } : d
-        )
-        .filter(d => d.items.length > 0)
-    )
+  const handleDelete = async (itemId) => {
+    try {
+      await deleteLunchItem(itemId)
+      fetchMenu()
+    } catch {
+      setError('Kunde inte ta bort rätten')
+    }
+  }
+
+  const handleEditStart = (item, day) => {
+    setEditingId(item.id)
+    setEditValues({
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      availableDate: day.date || '',
+    })
+  }
+
+  const handleEditSave = async (itemId) => {
+    setSaving(true)
+    setError(null)
+    try {
+      await updateLunchItem(itemId, editValues)
+      setEditingId(null)
+      fetchMenu()
+    } catch {
+      setError('Kunde inte uppdatera rätten')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -132,19 +156,60 @@ function LunchAdmin() {
               <tbody>
                 {day.items.map((item, i) => (
                   <tr key={item.id}>
-                    <td>{String(i + 1).padStart(2, '0')}</td>
-                    <td>{item.name}</td>
-                    <td>{item.description}</td>
-                    <td>{item.price} kr</td>
-                    <td className="actions">
-                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(day.dayNum, item.id)}>Ta bort</button>
-                    </td>
+                    {editingId === item.id ? (
+                      // redigeringsläge
+                      <>
+                        <td>{String(i + 1).padStart(2, '0')}</td>
+                        <td>
+                          <input
+                            type="text"
+                            value={editValues.name}
+                            onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={editValues.description}
+                            onChange={(e) => setEditValues({ ...editValues, description: e.target.value })}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={editValues.price}
+                            onChange={(e) => setEditValues({ ...editValues, price: e.target.value })}
+                            style={{ width: '70px' }}
+                          />
+                        </td>
+                        <td className="actions">
+                          <button className="btn btn-outline btn-sm" onClick={() => setEditingId(null)}>Avbryt</button>
+                          <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(item.id)} disabled={saving}>
+                            {saving ? '...' : 'Spara'}
+                          </button>
+                        </td>
+                      </>
+                    ) : (
+                      // normalläge
+                      <>
+                        <td>{String(i + 1).padStart(2, '0')}</td>
+                        <td>{item.name}</td>
+                        <td>{item.description}</td>
+                        <td>{item.price} kr</td>
+                        <td className="actions">
+                          <button className="btn btn-outline btn-sm" onClick={() => handleEditStart(item, day)}>Redigera</button>
+                          <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)}>Ta bort</button>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ))}
+
+        {error && <p style={{ padding: '1rem', color: 'red' }}>{error}</p>}
       </div>
     </>
   )

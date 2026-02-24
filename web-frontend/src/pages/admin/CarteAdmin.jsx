@@ -1,45 +1,69 @@
-import { useState } from 'react'
-import { carteMenu } from '../../data/mockData'
+import { useState, useEffect } from 'react'
+import { getCarteMenu, addCarteItem, deleteCarteItem } from '../../api/menuApi'
 
 function CarteAdmin() {
-  const [categories, setCategories] = useState(carteMenu)
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
   const [addingTo, setAddingTo] = useState(null)
   const [newItem, setNewItem] = useState({ name: '', description: '', price: '' })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
   // håller reda på vilken rad som redigeras just nu
   const [editingId, setEditingId] = useState(null)
   const [editValues, setEditValues] = useState({ name: '', description: '', price: '' })
 
-  const handleAdd = (catIndex) => {
+  useEffect(() => {
+    fetchMenu()
+  }, [])
+
+  function fetchMenu() {
+    setLoading(true)
+    getCarteMenu()
+      .then(data => {
+        setCategories(data)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }
+
+  const handleAdd = async (catIndex) => {
     if (!newItem.name) return
-    const updated = [...categories]
-    updated[catIndex] = {
-      ...updated[catIndex],
-      items: [
-        ...updated[catIndex].items,
-        { id: Date.now(), name: newItem.name, description: newItem.description, price: parseInt(newItem.price) || 0 }
-      ]
+    setSaving(true)
+    setError(null)
+    try {
+      await addCarteItem(categories[catIndex].category, {
+        name: newItem.name,
+        description: newItem.description,
+        price: newItem.price,
+        available: true,
+      })
+      setNewItem({ name: '', description: '', price: '' })
+      setAddingTo(null)
+      fetchMenu()
+    } catch {
+      setError('Kunde inte lägga till rätten')
+    } finally {
+      setSaving(false)
     }
-    setCategories(updated)
-    setNewItem({ name: '', description: '', price: '' })
-    setAddingTo(null)
   }
 
-  const handleDelete = (catIndex, itemId) => {
-    const updated = [...categories]
-    updated[catIndex] = {
-      ...updated[catIndex],
-      items: updated[catIndex].items.filter(i => i.id !== itemId)
+  const handleDelete = async (itemId) => {
+    setError(null)
+    try {
+      await deleteCarteItem(itemId)
+      fetchMenu()
+    } catch {
+      setError('Kunde inte ta bort rätten')
     }
-    setCategories(updated)
   }
 
-  // startar redigering av en rad
+  // öppna redigering (lokalt tills PUT-endpoint finns)
   const handleEditStart = (item) => {
     setEditingId(item.id)
     setEditValues({ name: item.name, description: item.description, price: item.price })
   }
 
-  // sparar ändringarna i raden
+  // spara redigering lokalt
   const handleEditSave = (catIndex, itemId) => {
     const updated = [...categories]
     updated[catIndex] = {
@@ -54,11 +78,15 @@ function CarteAdmin() {
     setEditingId(null)
   }
 
+  if (loading) return <p>Laddar...</p>
+
   return (
     <>
       <div className="main-header">
         <h1>À la <em>Carte</em></h1>
       </div>
+
+      {error && <p style={{ padding: '1rem', color: 'red' }}>{error}</p>}
 
       {categories.map((cat, catIndex) => (
         <div className="card" key={cat.category}>
@@ -90,7 +118,9 @@ function CarteAdmin() {
               </div>
               <div className="form-actions">
                 <button className="btn btn-outline btn-sm" onClick={() => setAddingTo(null)}>Avbryt</button>
-                <button className="btn btn-gold btn-sm" onClick={() => handleAdd(catIndex)}>Lägg till</button>
+                <button className="btn btn-gold btn-sm" onClick={() => handleAdd(catIndex)} disabled={saving}>
+                  {saving ? 'Sparar...' : 'Lägg till'}
+                </button>
               </div>
             </div>
           )}
@@ -103,7 +133,7 @@ function CarteAdmin() {
               {cat.items.map((item) => (
                 <tr key={item.id}>
                   {editingId === item.id ? (
-                    // redigeringsläge - visar inputfält istället för text
+                    // redigeringsläge
                     <>
                       <td><input type="text" value={editValues.name} onChange={(e) => setEditValues({ ...editValues, name: e.target.value })} /></td>
                       <td><input type="text" value={editValues.description} onChange={(e) => setEditValues({ ...editValues, description: e.target.value })} /></td>
@@ -121,7 +151,7 @@ function CarteAdmin() {
                       <td>{item.price} kr</td>
                       <td className="actions">
                         <button className="btn btn-outline btn-sm" onClick={() => handleEditStart(item)}>Redigera</button>
-                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(catIndex, item.id)}>Ta bort</button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)}>Ta bort</button>
                       </td>
                     </>
                   )}

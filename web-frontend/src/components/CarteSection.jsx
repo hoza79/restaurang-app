@@ -1,6 +1,13 @@
-import { carteMenu } from '../data/mockData'
+import { useState, useEffect } from 'react'
+import { getCarteMenu } from '../api/menuApi'
 
 function CarteSection() {
+  const [menu, setMenu] = useState([])
+
+  useEffect(() => {
+    getCarteMenu().then(data => setMenu(data))
+  }, [])
+
   return (
     <section className="carte" id="carte">
       <div className="container">
@@ -12,7 +19,7 @@ function CarteSection() {
         </p>
 
         <div className="carte-columns">
-          {carteMenu.map((cat) => (
+          {menu.map((cat) => (
             <div className="carte-category" key={cat.category}>
               <h3>{cat.category}</h3>
               {cat.items.map((item) => (
