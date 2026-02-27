@@ -19,8 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "android-orderTablet"
-include ':app'
+rootProject.name = "restaurang-app"
 include ':android-orderTablet'
-include ':android-kitchenapp'
-include ':android-employeSchedule'
+include ':android-employeeSchedule'

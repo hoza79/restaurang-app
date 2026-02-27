@@ -3,12 +3,12 @@ plugins {
 }
 
 android {
-    namespace 'com.antonsskafferi.android_ordertablet'
+    namespace 'com.antonsskafferi.staff'
 
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.antonsskafferi.android_ordertablet"
+        applicationId "com.antonsskafferi.staff"
         minSdk 25
         targetSdk 36
         versionCode 1
