@@ -1,0 +1,9 @@
+create-jdbc-connection-pool
+--datasourceclassname org.postgresql.ds.PGSimpleDataSource
+--restype javax.sql.DataSource
+--property user=postgres:password=yourpassword:url=jdbc\:postgresql\://localhost\:5432/restaurant_db
+restaurantPool
+
+create-jdbc-resource
+--connectionpoolid restaurantPool
+jdbc/restaurant_db
