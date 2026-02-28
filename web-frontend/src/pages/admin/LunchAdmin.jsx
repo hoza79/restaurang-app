@@ -144,70 +144,75 @@ function LunchAdmin() {
 
         {days.length === 0 && <p style={{ padding: '1.5rem' }}>Inga lunchrätter hittades.</p>}
 
-        {days.map(day => (
-          <div key={day.dayNum}>
-            <h4 style={{ padding: '1.5rem 1.5rem 0.5rem', margin: 0, borderTop: '1px solid rgba(58,51,44,0.10)' }}>
-              {day.label}
-            </h4>
-            <table className="admin-table">
-              <thead>
-                <tr><th>Nr</th><th>Rätt</th><th>Beskrivning</th><th>Pris</th><th></th></tr>
-              </thead>
-              <tbody>
-                {day.items.map((item, i) => (
-                  <tr key={item.id}>
-                    {editingId === item.id ? (
-                      // redigeringsläge
-                      <>
-                        <td>{String(i + 1).padStart(2, '0')}</td>
-                        <td>
-                          <input
-                            type="text"
-                            value={editValues.name}
-                            onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            value={editValues.description}
-                            onChange={(e) => setEditValues({ ...editValues, description: e.target.value })}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            value={editValues.price}
-                            onChange={(e) => setEditValues({ ...editValues, price: e.target.value })}
-                            style={{ width: '70px' }}
-                          />
-                        </td>
-                        <td className="actions">
-                          <button className="btn btn-outline btn-sm" onClick={() => setEditingId(null)}>Avbryt</button>
-                          <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(item.id)} disabled={saving}>
-                            {saving ? '...' : 'Spara'}
-                          </button>
-                        </td>
-                      </>
-                    ) : (
-                      // normalläge
-                      <>
-                        <td>{String(i + 1).padStart(2, '0')}</td>
-                        <td>{item.name}</td>
-                        <td>{item.description}</td>
-                        <td>{item.price} kr</td>
-                        <td className="actions">
-                          <button className="btn btn-outline btn-sm" onClick={() => handleEditStart(item, day)}>Redigera</button>
-                          <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)}>Ta bort</button>
-                        </td>
-                      </>
-                    )}
+        {days.length > 0 && (
+          <table className="admin-table">
+            <thead>
+              <tr><th>Nr</th><th>Rätt</th><th>Beskrivning</th><th>Pris</th><th></th></tr>
+            </thead>
+            <tbody>
+              {days.map(day => (
+                <>
+                  {/* dagnamn som separatorrad */}
+                  <tr key={`day-${day.dayNum}`}>
+                    <td colSpan={5} style={{ padding: '1rem 1.5rem 0.4rem', fontWeight: 600, borderTop: '1px solid rgba(58,51,44,0.10)', background: 'transparent' }}>
+                      {day.label}
+                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
+                  {day.items.map((item, i) => (
+                    <tr key={item.id}>
+                      {editingId === item.id ? (
+                        // redigeringsläge
+                        <>
+                          <td>{String(i + 1).padStart(2, '0')}</td>
+                          <td>
+                            <input
+                              type="text"
+                              value={editValues.name}
+                              onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={editValues.description}
+                              onChange={(e) => setEditValues({ ...editValues, description: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={editValues.price}
+                              onChange={(e) => setEditValues({ ...editValues, price: e.target.value })}
+                              style={{ width: '70px' }}
+                            />
+                          </td>
+                          <td className="actions">
+                            <button className="btn btn-outline btn-sm" onClick={() => setEditingId(null)}>Avbryt</button>
+                            <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(item.id)} disabled={saving}>
+                              {saving ? '...' : 'Spara'}
+                            </button>
+                          </td>
+                        </>
+                      ) : (
+                        // normalläge
+                        <>
+                          <td>{String(i + 1).padStart(2, '0')}</td>
+                          <td>{item.name}</td>
+                          <td>{item.description}</td>
+                          <td>{item.price} kr</td>
+                          <td className="actions">
+                            <button className="btn btn-outline btn-sm" onClick={() => handleEditStart(item, day)}>Redigera</button>
+                            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)}>Ta bort</button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </>
+              ))}
+            </tbody>
+          </table>
+        )}
 
         {error && <p style={{ padding: '1rem', color: 'red' }}>{error}</p>}
       </div>
