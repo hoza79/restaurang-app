@@ -17,11 +17,11 @@
         android:layout_marginBottom="32dp"/>
 
     <EditText
-        android:id="@+id/etEmployeeName"
+        android:id="@+id/etEmployeeEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Ditt namn"
-        android:inputType="textPersonName"
+        android:hint="E-postadress"
+        android:inputType="textEmailAddress"
         android:padding="12dp"
         android:background="@android:drawable/editbox_background"/>
 
