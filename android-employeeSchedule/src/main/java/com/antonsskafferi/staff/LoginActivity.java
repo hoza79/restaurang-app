@@ -15,17 +15,19 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        EditText etName = findViewById(R.id.etEmployeeName);
+        EditText etEmail = findViewById(R.id.etEmployeeEmail);
         Button btnLogin = findViewById(R.id.btnLogin);
 
         btnLogin.setOnClickListener(v -> {
-            String name = etName.getText().toString().trim();
-            if (name.isEmpty()) {
-                Toast.makeText(this, "Vänligen fyll i ditt namn", Toast.LENGTH_SHORT).show();
+            String email = etEmail.getText().toString().trim();
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Vänligen fyll i din e-postadress", Toast.LENGTH_SHORT).show();
+            } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(this, "Vänligen ange en giltig e-postadress", Toast.LENGTH_SHORT).show();
             } else {
-                // Spara namnet lokalt för att veta vem som är inloggad
+                // Spara e-post lokalt för att veta vem som är inloggad
                 SharedPreferences prefs = getSharedPreferences("StaffPrefs", MODE_PRIVATE);
-                prefs.edit().putString("loggedInUser", name).apply();
+                prefs.edit().putString("loggedInUser", email).apply();
 
                 Intent intent = new Intent(this, ScheduleActivity.class);
                 startActivity(intent);
