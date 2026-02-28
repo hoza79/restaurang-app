@@ -8,6 +8,7 @@ import org.miun.se.backend.model.enums.OrderStatus;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import jakarta.json.bind.annotation.JsonbTransient;
 
 @Entity
 @Table(name = "customer_order")
@@ -40,8 +41,8 @@ public class CustomerOrder {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "customerOrder")
+    @JsonbTransient
     private List<OrderBatch> orderBatches = new ArrayList<>();
-
     // Constructors
     protected CustomerOrder() {}
 
