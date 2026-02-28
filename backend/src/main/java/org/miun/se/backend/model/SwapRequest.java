@@ -65,14 +65,14 @@ public class SwapRequest {
     public Integer getSwapId() { return swapId; }
     public void setSwapId(Integer swapId) { this.swapId = swapId; }
 
-    public Integer getSenderEmployeeId() { return senderEmployee.getEmployeeId(); }
-    public void setSenderEmployeeId(Employee senderEmployee) { this.senderEmployee = senderEmployee; }
+    public Integer getSenderEmployee() { return senderEmployee.getEmployeeId(); }
+    public void setSenderEmployee(Employee senderEmployee) { this.senderEmployee = senderEmployee; }
 
-    public Integer getReceiverEmployeeId() { return receiverEmployee.getEmployeeId(); }
+    public Integer getReceiverEmployee() { return receiverEmployee.getEmployeeId(); }
     public void setReceiverEmployee(Employee receiverEmployee) { this.receiverEmployee = receiverEmployee; }
 
-    public Integer getShiftId() { return shift.getShiftId(); }
-    public void setShiftId(Shift shift) { this.shift = shift; }
+    public Integer getShift() { return shift.getShiftId(); }
+    public void setShift(Shift shift) { this.shift = shift; }
 
     public SwapStatus getSwapStatus() { return swapStatus; }
     public void setSwapStatus(SwapStatus swapStatus) { this.swapStatus = swapStatus; }
