@@ -4,6 +4,8 @@ import org.miun.se.backend.DTO.KitchenOrderDto;
 import org.miun.se.backend.model.CustomerOrder;
 import org.miun.se.backend.model.Employee;
 import org.miun.se.backend.model.DiningTable;
+import org.miun.se.backend.model.OrderBatch;
+import org.miun.se.backend.model.enums.BatchStatus;
 import org.miun.se.backend.model.enums.OrderStatus;
 import org.miun.se.backend.model.Employee;
 import org.miun.se.backend.model.DiningTable;
@@ -112,37 +114,12 @@ public class OrderResource {
     }
 
 
-    @GET
-    @Path("/kitchen/orders")
-    @Transactional
-    public Response getKitchenOrders() {
 
-        List<CustomerOrder> orders = em.createQuery(
-                        "SELECT o FROM CustomerOrder o WHERE o.orderStatus = :status ORDER BY o.createdAt ASC",
-                        CustomerOrder.class
-                )
-                .setParameter("status", OrderStatus.IN_PROGRESS)
-                .getResultList();
-
-        List<KitchenOrderDto> result = orders.stream()
-                .map(o -> new KitchenOrderDto(
-                        o.getOrderId(),
-                        o.getDiningTable().getTableNumber(),
-                        o.getCreatedAt(),
-                        o.getTotalPrice(),
-                        o.getOrderStatus().name()
-                ))
-                .toList();
-
-        return Response.ok(result).build();
-    }
 
 
 
     @POST
     @Path("/pay")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Transactional
     public Response payOrder(PayRequest request) {
 
@@ -156,10 +133,28 @@ public class OrderResource {
                     .build();
         }
 
+        // 1️⃣ Kontrollera om det finns PROCESSING batches
+        Long processingCount = em.createQuery(
+                        "SELECT COUNT(b) FROM OrderBatch b " +
+                                "WHERE b.customerOrder.diningTable.tableId = :tableId " +
+                                "AND b.customerOrder.orderStatus = :orderStatus " +
+                                "AND b.batchStatus = :status",
+                        Long.class)
+                .setParameter("tableId", tableId)
+                .setParameter("orderStatus", OrderStatus.IN_PROGRESS)
+                .setParameter("status", BatchStatus.PROCESSING)
+                .getSingleResult();
+
+        if (processingCount > 0) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "Cannot pay. Kitchen still processing orders."))
+                    .build();
+        }
+
+        // 2️⃣ Markera alla aktiva orders som COMPLETE
         List<CustomerOrder> activeOrders = em.createQuery(
                         "SELECT o FROM CustomerOrder o WHERE o.diningTable.tableId = :tableId AND o.orderStatus = :status",
-                        CustomerOrder.class
-                )
+                        CustomerOrder.class)
                 .setParameter("tableId", tableId)
                 .setParameter("status", OrderStatus.IN_PROGRESS)
                 .getResultList();
