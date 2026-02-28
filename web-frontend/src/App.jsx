@@ -6,8 +6,6 @@ import LunchAdmin from './pages/admin/LunchAdmin'
 import CarteAdmin from './pages/admin/CarteAdmin'
 import MusicAdmin from './pages/admin/MusicAdmin'
 import BookingAdmin from './pages/admin/BookingAdmin'
-import EventAdmin from './pages/admin/EventAdmin'
-
 function App() {
   return (
     <Routes>
@@ -17,7 +15,6 @@ function App() {
         <Route path="lunch" element={<LunchAdmin />} />
         <Route path="carte" element={<CarteAdmin />} />
         <Route path="musik" element={<MusicAdmin />} />
-        <Route path="events" element={<EventAdmin />} />
         <Route path="bokningar" element={<BookingAdmin />} />
       </Route>
     </Routes>
