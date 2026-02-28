@@ -26,6 +26,11 @@ public class ShiftAdapter extends RecyclerView.Adapter<ShiftAdapter.ViewHolder> 
         this.listener = listener;
     }
 
+    public void setShifts(List<Shift> newShifts) {
+        this.shifts = newShifts;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -63,7 +68,7 @@ public class ShiftAdapter extends RecyclerView.Adapter<ShiftAdapter.ViewHolder> 
                         .setMessage("Vill du verkligen ångra din bytesförfrågan?")
                         .setPositiveButton("Ja", (dialog, which) -> {
                             SwapRequest.allRequests.remove(pendingReq);
-                            notifyItemChanged(holder.getAdapterPosition());
+                            notifyItemChanged(holder.getBindingAdapterPosition());
                         })
                         .setNegativeButton("Nej", null)
                         .show();

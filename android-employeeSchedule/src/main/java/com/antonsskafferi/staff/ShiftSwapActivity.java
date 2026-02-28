@@ -28,34 +28,33 @@ public class ShiftSwapActivity extends AppCompatActivity {
         }
 
         SharedPreferences prefs = getSharedPreferences("StaffPrefs", MODE_PRIVATE);
-        String myName = prefs.getString("loggedInUser", "Anställd");
+        String myEmail = prefs.getString("loggedInUser", "anna.berg@antons.se");
 
         RecyclerView rv = findViewById(R.id.rvCoworkers);
         rv.setLayoutManager(new LinearLayoutManager(this));
 
-        List<String> coworkers = Arrays.asList("Anna", "Erik", "Linda", "Olof", "Kalle");
+        // DEMONSTRATOR: Endast de två kontona
+        List<String> coworkers = Arrays.asList("anna.berg@antons.se", "erik.sten@antons.se");
         
-        rv.setAdapter(new CoworkerAdapter(coworkers, name -> {
-            // --- KRAV: MAN KAN INTE BYTA MED SIG SJÄLV ---
-            if (name.equalsIgnoreCase(myName)) {
+        rv.setAdapter(new CoworkerAdapter(coworkers, email -> {
+            if (email.equalsIgnoreCase(myEmail)) {
                 Toast.makeText(this, "Du kan inte byta med dig själv!", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             new AlertDialog.Builder(this)
                 .setTitle("Skicka förfrågan")
-                .setMessage("Vill du skicka en bytesförfrågan till " + name + "?")
+                .setMessage("Vill du skicka en bytesförfrågan till " + email + "?")
                 .setPositiveButton("Ja", (dialog, which) -> {
-                    // --- KRAV: SKAPA SPECIFIK FÖRFRÅGAN ---
                     SwapRequest req = new SwapRequest(
                         UUID.randomUUID().toString(),
-                        myName,
-                        name,
+                        myEmail,
+                        email,
                         shiftToSwap
                     );
                     SwapRequest.allRequests.add(req);
-
-                    Toast.makeText(this, "Förfrågan skickad till " + name, Toast.LENGTH_LONG).show();
+                    
+                    Toast.makeText(this, "Förfrågan skickad till " + email, Toast.LENGTH_LONG).show();
                     finish();
                 })
                 .setNegativeButton("Avbryt", null)

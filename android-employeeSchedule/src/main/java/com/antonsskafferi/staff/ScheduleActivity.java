@@ -17,7 +17,7 @@ public class ScheduleActivity extends AppCompatActivity {
     private List<SwapRequest> myIncomingRequests = new ArrayList<>();
     private SwapRequestAdapter requestAdapter;
     private ShiftAdapter shiftAdapter;
-    private String userName;
+    private String userEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,10 +25,10 @@ public class ScheduleActivity extends AppCompatActivity {
         setContentView(R.layout.activity_schedule);
 
         SharedPreferences prefs = getSharedPreferences("StaffPrefs", MODE_PRIVATE);
-        userName = prefs.getString("loggedInUser", "Anställd");
+        userEmail = prefs.getString("loggedInUser", "anna.berg@antons.se");
 
         TextView tvWelcome = findViewById(R.id.tvWelcome);
-        tvWelcome.setText("Välkommen, " + userName + "!");
+        tvWelcome.setText("Inloggad: " + userEmail);
 
         findViewById(R.id.btnLogout).setOnClickListener(v -> {
             prefs.edit().remove("loggedInUser").apply();
@@ -53,7 +53,10 @@ public class ScheduleActivity extends AppCompatActivity {
         requestAdapter = new SwapRequestAdapter(myIncomingRequests, new SwapRequestAdapter.OnSwapRequestListener() {
             @Override
             public void onAccept(SwapRequest request) {
-                Toast.makeText(ScheduleActivity.this, "Du har accepterat passet!", Toast.LENGTH_LONG).show();
+                // GENOMFÖR BYTET I DATABASEN
+                MockDatabase.getInstance().transferShift(request.shift.id, request.receiverName);
+                
+                Toast.makeText(ScheduleActivity.this, "Passet är nu ditt!", Toast.LENGTH_LONG).show();
                 request.status = "ACCEPTED";
                 refreshData();
             }
@@ -72,8 +75,7 @@ public class ScheduleActivity extends AppCompatActivity {
         RecyclerView rv = findViewById(R.id.rvSchedule);
         rv.setLayoutManager(new LinearLayoutManager(this));
 
-        List<Shift> myShifts = getMockShifts(userName);
-        shiftAdapter = new ShiftAdapter(myShifts, userName, shift -> {
+        shiftAdapter = new ShiftAdapter(new ArrayList<>(), userEmail, shift -> {
             Intent intent = new Intent(this, ShiftSwapActivity.class);
             intent.putExtra("selectedShift", shift);
             startActivity(intent);
@@ -82,13 +84,17 @@ public class ScheduleActivity extends AppCompatActivity {
     }
 
     private void refreshData() {
+        // Uppdatera inkommande förfrågningar
         myIncomingRequests.clear();
         for (SwapRequest r : SwapRequest.allRequests) {
-            if (r.receiverName.equalsIgnoreCase(userName) && "PENDING".equals(r.status)) {
+            if (r.receiverName.equalsIgnoreCase(userEmail) && "PENDING".equals(r.status)) {
                 myIncomingRequests.add(r);
             }
         }
 
+        // Uppdatera schemat från MockDatabase
+        List<Shift> myShifts = MockDatabase.getInstance().getShiftsFor(userEmail);
+        
         TextView tvHeader = findViewById(R.id.tvRequestsHeader);
         RecyclerView rvReq = findViewById(R.id.rvSwapRequests);
         
@@ -100,15 +106,10 @@ public class ScheduleActivity extends AppCompatActivity {
             rvReq.setVisibility(View.VISIBLE);
         }
 
+        // Uppdatera adaptrarna
         if (requestAdapter != null) requestAdapter.notifyDataSetChanged();
-        if (shiftAdapter != null) shiftAdapter.notifyDataSetChanged();
-    }
-
-    private List<Shift> getMockShifts(String user) {
-        List<Shift> list = new ArrayList<>();
-        list.add(new Shift("1", "Måndag 30 Okt", "16:00 - 22:00", "Servis", user));
-        list.add(new Shift("2", "Onsdag 1 Nov", "11:00 - 16:00", "Servis", user));
-        list.add(new Shift("3", "Lördag 4 Nov", "17:00 - 00:00", "Bar", user));
-        return list;
+        if (shiftAdapter != null) {
+            shiftAdapter.setShifts(myShifts);
+        }
     }
 }
