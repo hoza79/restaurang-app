@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F0E8">
+    android:background="#121212">
 
     <!-- Header -->
     <LinearLayout
@@ -41,7 +41,7 @@
             android:textSize="14sp"/>
     </LinearLayout>
 
-    <!-- Kurssektioner – fylls i av Java -->
+    <!-- Kurssektioner -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -55,11 +55,11 @@
             android:orientation="vertical"/>
     </ScrollView>
 
-    <!-- Footer: totalsumma + stäng nota -->
+    <!-- Footer -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#FFFFFF"
+        android:background="#1E1E1E"
         android:padding="16dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
@@ -71,7 +71,8 @@
             android:layout_weight="1"
             android:text="Totalt:"
             android:textSize="16sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:textColor="#EEEEEE"/>
 
         <TextView
             android:id="@+id/tvTotal"
@@ -82,18 +83,27 @@
             android:textColor="#C9A961"/>
     </LinearLayout>
 
-    <!--
-      Visas ENBART när alla kurser är skickade.
-      Att trycka här stänger notan (bordet blir ledigt).
-    -->
+    <!-- Skicka hela beställningen på en gång (döljs när inget är pending) -->
+    <Button
+        android:id="@+id/btnSendOrder"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Skicka beställning 🍳"
+        android:backgroundTint="#2E7D32"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:visibility="gone"/>
+
+    <!-- Betala-knapp (döljs/visas från kod) -->
     <Button
         android:id="@+id/btnSendToKitchen"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:text="Stäng nota – alla kurser skickade"
+        android:layout_height="56dp"
+        android:text="💳  Betala"
         android:backgroundTint="#C9A961"
         android:textColor="#1A1A1A"
-        android:textSize="14sp"
+        android:textSize="15sp"
         android:textStyle="bold"
         android:visibility="gone"/>
 

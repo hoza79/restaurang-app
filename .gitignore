@@ -19,6 +19,7 @@ buildNumber.properties
 /*.ipr
 /*.iws
 *.ai
+*.idea
 
 # ====================
 # OS-specific files

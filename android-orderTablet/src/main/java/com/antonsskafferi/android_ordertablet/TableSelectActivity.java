@@ -60,12 +60,8 @@ public class TableSelectActivity extends AppCompatActivity {
 
                 tables.clear();
                 tables.addAll(resp.body());
-                Log.d(TAG, "Fetched tables: " + tables.size());
-                for (DiningTableDto t : tables) {
-                    Log.d(TAG, "Table " + t.tableNumber + " id=" + t.tableId + " status=" + t.tableStatus);
-                }
 
-                // Sort by tableNumber (so grid is stable)
+                // Sort by tableNumber (stable grid)
                 tables.sort((a, b) -> {
                     int an = a.tableNumber != null ? a.tableNumber : 0;
                     int bn = b.tableNumber != null ? b.tableNumber : 0;
@@ -78,7 +74,7 @@ public class TableSelectActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<DiningTableDto>> call, Throwable t) {
                 loadingTables = false;
-                Log.e(TAG, "Failed to fetch tables", t);
+                Log.e(TAG, "Failed to fetch tables: " + t.getMessage(), t);
                 Toast.makeText(TableSelectActivity.this,
                         "Ingen kontakt med servern", Toast.LENGTH_SHORT).show();
                 buildGrid();
@@ -108,18 +104,21 @@ public class TableSelectActivity extends AppCompatActivity {
 
         boolean hasNota = Cart.hasOpenSession(tableNumber);
 
-        boolean available = tableStatus != null && tableStatus.equalsIgnoreCase("AVAILABLE");
-        boolean occ = !available; // treat anything non-AVAILABLE as occupied for now
+        String st = (tableStatus == null) ? "UNKNOWN" : tableStatus.trim().toUpperCase(Locale.ROOT);
+        boolean isUnknown   = st.isEmpty() || st.equals("UNKNOWN") || st.equals("NULL");
+        boolean isAvailable = st.equals("AVAILABLE");
+        boolean isOccupied  = !isUnknown && !isAvailable;
 
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER);
 
+        // Färg: guld-ton = öppen nota | orange-ton = upptaget | grå = ledig/okänd
         int bgColor = hasNota
-                ? Color.parseColor("#3D2E00")   // active note
-                : occ
-                ? Color.parseColor("#2A1A0E")   // occupied-ish
-                : Color.parseColor("#252525");  // free
+                ? Color.parseColor("#3D2E00")
+                : isOccupied
+                ? Color.parseColor("#2A1A0E")
+                : Color.parseColor("#252525");
 
         card.setBackgroundColor(bgColor);
 
@@ -143,7 +142,10 @@ public class TableSelectActivity extends AppCompatActivity {
         if (hasNota) {
             tvSt.setText("Öppen nota");
             tvSt.setTextColor(Color.parseColor("#C9A961"));
-        } else if (!available) {
+        } else if (isUnknown) {
+            tvSt.setText("Okänd");
+            tvSt.setTextColor(Color.parseColor("#888888"));
+        } else if (isOccupied) {
             tvSt.setText("Upptaget");
             tvSt.setTextColor(Color.parseColor("#FF6B6B"));
         } else {
@@ -157,14 +159,21 @@ public class TableSelectActivity extends AppCompatActivity {
         card.setClickable(true);
         card.setFocusable(true);
         card.setOnClickListener(v -> {
+            // If we couldn't fetch tableId, we can't create backend order
+            if (tableId == null) {
+                Toast.makeText(this, "Saknar tableId från backend", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             Cart.CartSession s = Cart.openTable(tableNumber, tableId);
 
+            // Already created order for this session
             if (s.orderId != null) {
                 startActivity(new Intent(this, OrderActivity.class));
                 return;
             }
 
-            final int EMPLOYEE_ID = 1; // fixed waiter
+            final int EMPLOYEE_ID = 2; // fixed WAITER (typical seed id)
 
             ApiClient.api().createOrder(new com.antonsskafferi.android_ordertablet.net.CreateOrderRequest(EMPLOYEE_ID, tableId))
                     .enqueue(new retrofit2.Callback<java.util.Map<String, Object>>() {

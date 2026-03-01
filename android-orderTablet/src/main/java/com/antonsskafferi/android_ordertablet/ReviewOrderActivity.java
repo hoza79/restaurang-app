@@ -51,7 +51,8 @@ public class ReviewOrderActivity extends AppCompatActivity {
     private void renderSections() {
         llSections.removeAllViews();
         Cart.CartSession session = Cart.current();
-        boolean anyItems = false;
+        boolean anyItems   = false;
+        boolean anyPending = false;
 
         for (int slot = 0; slot <= 3; slot++) {
             List<OrderItem> slotItems = new ArrayList<>();
@@ -63,6 +64,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
             final int fs = slot;
             boolean allSent    = slotItems.stream().allMatch(i -> i.sentAt > 0);
             boolean hasPending = session.hasPendingForSlot(slot);
+            if (hasPending) anyPending = true;
 
             // Rubrik
             TextView tvHdr = new TextView(this);
@@ -164,7 +166,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
                 }
             }
 
-            // Skicka-knapp
+            // Skicka-knapp (per slot)
             if (hasPending) {
                 String dest = (slot == 0) ? "baren 🍹" : "köket 🍳";
                 Button btn = new Button(this);
@@ -175,11 +177,12 @@ public class ReviewOrderActivity extends AppCompatActivity {
                         LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
                 bp.setMargins(0, dp(10), 0, 0);
                 btn.setLayoutParams(bp);
-                btn.setOnClickListener(v -> {
-                    //Cart.CartSession session = Cart.current();
 
+                btn.setOnClickListener(v -> {
                     if (session.orderId == null) {
-                        Toast.makeText(this, "Saknar orderId (backend). Gå tillbaka och öppna bordet igen.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this,
+                                "Saknar orderId (backend). Gå tillbaka och öppna bordet igen.",
+                                Toast.LENGTH_LONG).show();
                         return;
                     }
 
@@ -190,7 +193,8 @@ public class ReviewOrderActivity extends AppCompatActivity {
                     if (fs == 0) {
                         session.markSlotSent(fs);
                         Toast.makeText(ReviewOrderActivity.this,
-                                "✓ " + SLOT_LABELS[fs] + " skickad till baren!", Toast.LENGTH_SHORT).show();
+                                "✓ " + SLOT_LABELS[fs] + " skickad till baren!",
+                                Toast.LENGTH_SHORT).show();
                         renderSections();
                         return;
                     }
@@ -213,11 +217,13 @@ public class ReviewOrderActivity extends AppCompatActivity {
                                     if (resp.isSuccessful()) {
                                         session.markSlotSent(fs);
                                         Toast.makeText(ReviewOrderActivity.this,
-                                                "✓ " + SLOT_LABELS[fs] + " skickad!", Toast.LENGTH_SHORT).show();
+                                                "✓ " + SLOT_LABELS[fs] + " skickad!",
+                                                Toast.LENGTH_SHORT).show();
                                         renderSections();
                                     } else {
                                         Toast.makeText(ReviewOrderActivity.this,
-                                                "Kunde inte skicka (" + resp.code() + ")", Toast.LENGTH_LONG).show();
+                                                "Kunde inte skicka (" + resp.code() + ")",
+                                                Toast.LENGTH_LONG).show();
                                         Log.e(TAG, "createBatch failed: HTTP " + resp.code());
                                     }
                                 }
@@ -225,13 +231,16 @@ public class ReviewOrderActivity extends AppCompatActivity {
                                 @Override
                                 public void onFailure(Call<Map<String, Object>> call, Throwable t) {
                                     Toast.makeText(ReviewOrderActivity.this,
-                                            "Ingen kontakt med servern", Toast.LENGTH_LONG).show();
+                                            "Ingen kontakt med servern",
+                                            Toast.LENGTH_LONG).show();
                                     Log.e(TAG, "createBatch network failure", t);
                                 }
                             });
                 });
+
                 card.addView(btn);
             } else if (allSent) {
+                // Visa "✓ Skickad" om hela sloten är klar
                 TextView tvS = new TextView(this);
                 tvS.setText("✓ Skickad");
                 tvS.setTextColor(SENT); tvS.setTextSize(12);
@@ -240,6 +249,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
             }
         }
 
+// Empty cart
         if (!anyItems) {
             TextView tvE = new TextView(this);
             tvE.setText("Korgen är tom");
@@ -250,7 +260,16 @@ public class ReviewOrderActivity extends AppCompatActivity {
 
         tvTotal.setText(String.format("%.0f kr", session.total()));
 
-        // Betala-knapp – alltid synlig
+// Gemensam "Skicka beställning"-knapp (skickar alla pending slots)
+        Button btnSend = findViewById(R.id.btnSendOrder);
+        if (anyPending) {
+            btnSend.setVisibility(View.VISIBLE);
+            btnSend.setOnClickListener(v -> sendAll(session));
+        } else {
+            btnSend.setVisibility(View.GONE);
+        }
+
+// Betala-knapp
         Button btnPay = findViewById(R.id.btnSendToKitchen);
         btnPay.setText("💳  Betala");
         btnPay.setVisibility(View.VISIBLE);
@@ -259,6 +278,93 @@ public class ReviewOrderActivity extends AppCompatActivity {
             i.putExtra("total", session.total());
             startActivity(i);
         });
+    }
+
+    private void sendAll(Cart.CartSession session) {
+        if (session.orderId == null) {
+            Toast.makeText(this,
+                    "Saknar orderId (backend). Gå tillbaka och öppna bordet igen.",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Collect pending by slot
+        List<Integer> slotsToSend = new ArrayList<>();
+        for (int slot = 0; slot <= 3; slot++) {
+            if (!session.getPendingForSlot(slot).isEmpty()) slotsToSend.add(slot);
+        }
+
+        if (slotsToSend.isEmpty()) return;
+
+        // Handle DRINK slot locally (bar)
+        if (slotsToSend.contains(0)) {
+            session.markSlotSent(0);
+            slotsToSend.remove((Integer) 0);
+        }
+
+        // If only drinks were pending
+        if (slotsToSend.isEmpty()) {
+            Toast.makeText(this, "✓ Skickad till baren!", Toast.LENGTH_SHORT).show();
+            renderSections();
+            return;
+        }
+
+        // Send remaining slots as backend batches (parallel)
+        java.util.concurrent.atomic.AtomicInteger remaining = new java.util.concurrent.atomic.AtomicInteger(slotsToSend.size());
+        java.util.concurrent.atomic.AtomicBoolean anyFail = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+        for (int slot : slotsToSend) {
+            List<OrderItem> pending = session.getPendingForSlot(slot);
+            String batchType = slotToBatchType(slot);
+
+            List<CreateBatchItemRequest> items = new ArrayList<>();
+            for (OrderItem it : pending) {
+                items.add(new CreateBatchItemRequest(
+                        it.menuItemId,
+                        it.quantity,
+                        buildNotes(it)
+                ));
+            }
+
+            ApiClient.api().createBatch(session.orderId, new CreateBatchRequest(batchType, items))
+                    .enqueue(new Callback<Map<String, Object>>() {
+                        @Override
+                        public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> resp) {
+                            if (resp.isSuccessful()) {
+                                session.markSlotSent(slot);
+                            } else {
+                                anyFail.set(true);
+                                Log.e(TAG, "sendAll createBatch failed for slot " + slot + ": HTTP " + resp.code());
+                            }
+
+                            if (remaining.decrementAndGet() == 0) {
+                                if (anyFail.get()) {
+                                    Toast.makeText(ReviewOrderActivity.this,
+                                            "Vissa delar kunde inte skickas. Försök igen.",
+                                            Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(ReviewOrderActivity.this,
+                                            "✓ Beställning skickad!",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                                renderSections();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                            anyFail.set(true);
+                            Log.e(TAG, "sendAll createBatch network failure for slot " + slot, t);
+
+                            if (remaining.decrementAndGet() == 0) {
+                                Toast.makeText(ReviewOrderActivity.this,
+                                        "Ingen kontakt med servern. Försök igen.",
+                                        Toast.LENGTH_LONG).show();
+                                renderSections();
+                            }
+                        }
+                    });
+        }
     }
 
     private String slotToBatchType(int slot) {

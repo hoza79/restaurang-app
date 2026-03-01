@@ -8,5 +8,5 @@ public record MenuCarteItemDto (
         Integer menuItemId,
         String description,
         Double price,
-        Boolean available
+        Boolean options
 ) {}

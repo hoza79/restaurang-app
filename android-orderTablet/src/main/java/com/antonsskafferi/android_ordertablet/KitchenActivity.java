@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import android.util.Log;
 import com.antonsskafferi.android_ordertablet.net.ApiClient;
 import com.antonsskafferi.android_ordertablet.net.KitchenBatchDto;
@@ -16,6 +15,10 @@ import com.antonsskafferi.android_ordertablet.net.KitchenItemDto;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class KitchenActivity extends AppCompatActivity {
 
@@ -51,9 +54,7 @@ public class KitchenActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> resp) {
                     if (resp.isSuccessful()) {
-                        activeOrders.remove(pos);
-                        adapter.notifyItemRemoved(pos);
-                        updateUI();
+                        loadOrders();
                     } else {
                         Toast.makeText(KitchenActivity.this,
                                 "Kunde inte markera klar (" + resp.code() + ")", Toast.LENGTH_SHORT).show();
@@ -82,15 +83,19 @@ public class KitchenActivity extends AppCompatActivity {
             public void onResponse(Call<List<KitchenBatchDto>> call, Response<List<KitchenBatchDto>> resp) {
                 if (!resp.isSuccessful() || resp.body() == null) {
                     Log.e(TAG, "Kitchen batches failed: HTTP " + resp.code());
-                    // keep old list; just update UI
                     updateUI();
                     return;
                 }
 
-                activeOrders.clear();
+                List<KitchenOrder> fresh = new ArrayList<>();
 
                 for (KitchenBatchDto b : resp.body()) {
                     if (b == null || b.batchId == null || b.tableNumber == null) continue;
+
+                    // ✅ filter out bar batches
+                    if (b.batchType != null && b.batchType.trim().equalsIgnoreCase("DRINK")) {
+                        continue;
+                    }
 
                     KitchenOrder o = new KitchenOrder(b.batchId, b.tableNumber);
 
@@ -99,9 +104,7 @@ public class KitchenActivity extends AppCompatActivity {
                     if (b.items != null) {
                         for (KitchenItemDto it : b.items) {
                             if (it == null || it.name == null) continue;
-                            if (b.batchType != null && b.batchType.trim().equalsIgnoreCase("DRINK")) {
-                                continue; // bar batches should not be shown in kitchen view
-                            }
+
                             StringBuilder sb = new StringBuilder(it.name);
                             if (it.quantity != null && it.quantity > 1) sb.append(" x").append(it.quantity);
                             if (it.notes != null && !it.notes.trim().isEmpty())
@@ -110,12 +113,28 @@ public class KitchenActivity extends AppCompatActivity {
                         }
                     }
 
-                    // One “course” representing the batch
                     int slot = mapBatchTypeToSlot(b.batchType);
+
+                    // If you later parse createdAt, set createdAt properly; for now System.currentTimeMillis() is ok
                     o.addCourse(new KitchenOrder.Course(slot, dishes, System.currentTimeMillis()));
-                    activeOrders.add(o);
+
+                    fresh.add(o);
                 }
 
+                // sort: slot order then oldest first
+                fresh.sort((a, b) -> {
+                    KitchenOrder.Course ca = a.currentCourse();
+                    KitchenOrder.Course cb = b.currentCourse();
+                    int slotA = ca != null ? ca.slot : 99;
+                    int slotB = cb != null ? cb.slot : 99;
+                    if (slotA != slotB) return Integer.compare(slotA, slotB);
+                    long tA = ca != null ? ca.createdAt : Long.MAX_VALUE;
+                    long tB = cb != null ? cb.createdAt : Long.MAX_VALUE;
+                    return Long.compare(tA, tB);
+                });
+
+                activeOrders.clear();
+                activeOrders.addAll(fresh);
                 adapter.notifyDataSetChanged();
                 updateUI();
             }
@@ -149,7 +168,7 @@ public class KitchenActivity extends AppCompatActivity {
         clockHandler.post(new Runnable() {
             public void run() {
                 tvClock.setText(new SimpleDateFormat("HH:mm",
-                        Locale.getDefault()).format(new Date()));
+                        Locale.getDefault()).format(new java.util.Date()));
                 adapter.notifyDataSetChanged(); // uppdatera tidsbadges
                 clockHandler.postDelayed(this, 60_000);
             }
