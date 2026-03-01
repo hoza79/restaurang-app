@@ -25,8 +25,8 @@ public class MenuItem {
     @Column(name = "price", nullable = false)
     private double price;
 
-    @Column(name = "available", nullable = false)
-    private Boolean available;
+    @Column(name = "options", nullable = false)
+    private Boolean options;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -42,7 +42,7 @@ public class MenuItem {
         this.name = itemName;
         this.description = itemDescription;
         this.price = itemPrice;
-        this.available = true;
+        this.options = false;
     }
 
     // Lifecycle callbacks
@@ -75,8 +75,8 @@ public class MenuItem {
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
 
-    public Boolean getAvailable() { return available; }
-    public void setAvailable(Boolean available) { this.available = available; }
+    public Boolean getOptions() { return options; }
+    public void setOptions(Boolean options) { this.options = options; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
