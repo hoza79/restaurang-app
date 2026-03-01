@@ -14,7 +14,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.miun.se.backend.DTO.MenuDto;
 import org.miun.se.backend.DTO.MenuCarteItemDto;
 import org.miun.se.backend.DTO.CarteAddDto;
-import org.miun.se.backend.model.enums.MenuCartCategory;
+import org.miun.se.backend.rest.enums.MenuCartCategory;
 import org.miun.se.backend.model.MenuItem;
 import java.util.ArrayList;
 import java.util.List;
