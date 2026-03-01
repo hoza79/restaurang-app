@@ -25,7 +25,7 @@ public class MenuItem {
     @Column(name = "price", nullable = false)
     private double price;
 
-    @Column(name = "cooking_options", nullable = false)
+    @Column(name = "options", nullable = false)
     private Boolean options;
 
     @Column(name = "created_at", nullable = false, updatable = false)
