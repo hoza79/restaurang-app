@@ -1,25 +1,25 @@
 package com.antonsskafferi.android_ordertablet;
 
-import android.content.Intent;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.graphics.Color;
 import android.view.*;
 import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
-/**
- * Slot = den flik servitören befinner sig i.
- * Ingen dialog – rätten läggs direkt med flikens courseSlot.
- *
- * Exempel: Entrecôte i "Förrätt"-fliken → courseSlot=1 → köket
- * ser den som förrätt och tillagar den med övriga förrätter.
- */
 public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.VH> {
 
     private static final String[] SLOT_LABELS = {"Dryck", "Förrätt", "Varmrätt", "Efterrätt"};
+    private static final int BG      = 0xFF121212;
+    private static final int SURFACE = 0xFF1E1E1E;
+    private static final int GOLD    = 0xFFC9A961;
+    private static final int WHITE   = 0xFFEEEEEE;
+    private static final int GREY    = 0xFF888888;
 
     private final List<MenuItem> items;
-    private final int defaultSlot; // 0=Dryck 1=Förrätt 2=Varmrätt 3=Efterrätt
+    private final int defaultSlot;
 
     public MenuAdapter(List<MenuItem> items, int defaultSlot) {
         this.items = items;
@@ -39,22 +39,113 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.VH> {
         h.tvDesc.setText(m.description);
         h.tvPrice.setText(String.format("%.0f kr", m.price));
 
-        h.btnAdd.setOnClickListener(v -> {
-            if (m.hasCookingOptions || (m.sides != null && !m.sides.isEmpty())) {
-                // Kräver val → gå till DishDetailActivity
-                Intent i = new Intent(v.getContext(), DishDetailActivity.class);
-                i.putExtra("dishId", m.id);
-                i.putExtra("defaultSlot", defaultSlot); // flikens slot följer med
-                v.getContext().startActivity(i);
-            } else {
-                // Lägg direkt med flikens slot – ingen dialog
-                Cart.current().addItem(
-                        new OrderItem(m.name, m.price, m.category, defaultSlot));
-                Toast.makeText(v.getContext(),
-                        m.name + " → " + SLOT_LABELS[defaultSlot],
-                        Toast.LENGTH_SHORT).show();
+        // Byt ut plus mot tre prickar
+        h.btnAdd.setText("•••");
+        h.btnAdd.setVisibility(View.VISIBLE);
+
+        // Tryck på hela kortet
+        h.itemView.setOnClickListener(v -> handleTap(v.getContext(), m));
+
+        // Tre prickar öppnar alltid popup (med eller utan tillagning)
+        h.btnAdd.setOnClickListener(v -> showOptionsDialog(v.getContext(), m));
+    }
+
+    /** Tryck på rätten: popup om tillagningsval finns, annars lägg till direkt */
+    private void handleTap(Context ctx, MenuItem m) {
+        if (m.hasCookingOptions) {
+            showOptionsDialog(ctx, m);
+        } else {
+            Cart.current().addItem(new OrderItem(m.name, m.price, m.category, defaultSlot));
+            Toast.makeText(ctx, m.name + " tillagd", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /** Popup med tillagningsgrad (om applicable) + notes-fält */
+    private void showOptionsDialog(Context ctx, MenuItem m) {
+        LinearLayout layout = new LinearLayout(ctx);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setBackgroundColor(SURFACE);
+        layout.setPadding(dp(ctx, 20), dp(ctx, 16), dp(ctx, 20), dp(ctx, 8));
+
+        // Tillagningsgrad – bara om hasCookingOptions
+        final RadioGroup rg = new RadioGroup(ctx);
+        if (m.hasCookingOptions) {
+            TextView tvCooking = label(ctx, "Tillagning");
+            layout.addView(tvCooking);
+
+            String[] options = {"Rare", "Medium Rare", "Medium", "Done", "Well done"};
+            for (int i = 0; i < options.length; i++) {
+                RadioButton rb = new RadioButton(ctx);
+                rb.setId(View.generateViewId()); // unikt ID så RadioGroup fungerar
+                rb.setText(options[i]);
+                rb.setTextColor(WHITE);
+                rb.setTextSize(14);
+                if (i == 2) rb.setChecked(true); // Medium default
+                rg.addView(rb);
             }
-        });
+            layout.addView(rg);
+
+            View sep = new View(ctx);
+            sep.setBackgroundColor(0xFF333333);
+            LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 1);
+            sp.setMargins(0, dp(ctx, 12), 0, dp(ctx, 12));
+            sep.setLayoutParams(sp);
+            layout.addView(sep);
+        }
+
+        // Notes – alltid synligt
+        layout.addView(label(ctx, "Notes"));
+        EditText etNote = new EditText(ctx);
+        etNote.setHint("T.ex. utan is, extra sås...");
+        etNote.setHintTextColor(GREY);
+        etNote.setTextColor(WHITE);
+        etNote.setBackgroundColor(0xFF2A2A2A);
+        etNote.setPadding(dp(ctx, 12), dp(ctx, 10), dp(ctx, 12), dp(ctx, 10));
+        etNote.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        etNote.setMinHeight(dp(ctx, 72));
+        etNote.setGravity(Gravity.TOP | Gravity.START);
+        layout.addView(etNote);
+
+        new AlertDialog.Builder(ctx)
+                .setTitle(m.name)
+                .setView(layout)
+                .setPositiveButton("Lägg till", (d, w) -> {
+                    OrderItem item = new OrderItem(m.name, m.price, m.category, defaultSlot);
+
+                    if (m.hasCookingOptions) {
+                        int selId = rg.getCheckedRadioButtonId();
+                        if (selId != -1)
+                            item.cooking = ((RadioButton) rg.findViewById(selId)).getText().toString();
+                    }
+
+                    String note = etNote.getText().toString().trim();
+                    if (!note.isEmpty()) item.comment = note;
+
+                    Cart.current().addItem(item);
+                    Toast.makeText(ctx, m.name + " tillagd", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Avbryt", null)
+                .show();
+    }
+
+    private TextView label(Context ctx, String text) {
+        TextView tv = new TextView(ctx);
+        tv.setText(text);
+        tv.setTextColor(GOLD);
+        tv.setTextSize(12);
+        tv.setTypeface(null, android.graphics.Typeface.BOLD);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, dp(ctx, 8), 0, dp(ctx, 6));
+        tv.setLayoutParams(lp);
+        return tv;
+    }
+
+    private int dp(Context ctx, int v) {
+        return Math.round(v * ctx.getResources().getDisplayMetrics().density);
     }
 
     @Override public int getItemCount() { return items.size(); }

@@ -42,7 +42,8 @@ public class ReviewOrderActivity extends AppCompatActivity {
     private void renderSections() {
         llSections.removeAllViews();
         Cart.CartSession session = Cart.current();
-        boolean anyItems = false;
+        boolean anyItems   = false;
+        boolean anyPending = false;
 
         for (int slot = 0; slot <= 3; slot++) {
             List<OrderItem> slotItems = new ArrayList<>();
@@ -51,9 +52,8 @@ public class ReviewOrderActivity extends AppCompatActivity {
             if (slotItems.isEmpty()) continue;
             anyItems = true;
 
-            final int fs = slot;
-            boolean allSent    = slotItems.stream().allMatch(i -> i.sentAt > 0);
-            boolean hasPending = session.hasPendingForSlot(slot);
+            boolean allSent = slotItems.stream().allMatch(i -> i.sentAt > 0);
+            if (!allSent) anyPending = true;
 
             // Rubrik
             TextView tvHdr = new TextView(this);
@@ -109,7 +109,6 @@ public class ReviewOrderActivity extends AppCompatActivity {
                         | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
                 col.addView(tvName);
 
-                // Spec-rad
                 StringBuilder spec = new StringBuilder();
                 if (item.cooking != null && !item.cooking.isEmpty()) spec.append(item.cooking);
                 if (item.sides != null && !item.sides.isEmpty()) {
@@ -126,7 +125,6 @@ public class ReviewOrderActivity extends AppCompatActivity {
                     col.addView(tvSpec);
                 }
 
-                // Lång-klick = redigera kommentar
                 if (!sent) tvName.setOnLongClickListener(v -> {
                     showCommentDialog(item); return true; });
 
@@ -155,31 +153,8 @@ public class ReviewOrderActivity extends AppCompatActivity {
                 }
             }
 
-            // Skicka-knapp
-            if (hasPending) {
-                String dest = (slot == 0) ? "baren 🍹" : "köket 🍳";
-                Button btn = new Button(this);
-                btn.setText("Skicka " + SLOT_LABELS[slot] + " till " + dest);
-                btn.setBackgroundColor(slot == 0 ? 0xFF1565C0 : 0xFF2E2E2E);
-                btn.setTextColor(GOLD); btn.setTextSize(14);
-                LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
-                bp.setMargins(0, dp(10), 0, 0);
-                btn.setLayoutParams(bp);
-                btn.setOnClickListener(v -> {
-                    // ← KOPPLINGEN: hämta pending items och push till KitchenDataStore
-                    List<OrderItem> pending = session.getPendingForSlot(fs);
-                    if (fs != 0) { // Dryck går till bar, inte KitchenDataStore
-                        KitchenDataStore.getInstance().addOrder(
-                                Cart.getActiveTable(), fs, pending);
-                    }
-                    session.markSlotSent(fs);
-                    Toast.makeText(this,
-                            "✓ " + SLOT_LABELS[fs] + " skickad!", Toast.LENGTH_SHORT).show();
-                    renderSections();
-                });
-                card.addView(btn);
-            } else if (allSent) {
+            // Visa "✓ Skickad" om hela sloten är klar
+            if (allSent) {
                 TextView tvS = new TextView(this);
                 tvS.setText("✓ Skickad");
                 tvS.setTextColor(SENT); tvS.setTextSize(12);
@@ -198,7 +173,16 @@ public class ReviewOrderActivity extends AppCompatActivity {
 
         tvTotal.setText(String.format("%.0f kr", session.total()));
 
-        // Betala-knapp – alltid synlig
+        // En gemensam "Skicka beställning"-knapp
+        Button btnSend = findViewById(R.id.btnSendOrder);
+        if (anyPending) {
+            btnSend.setVisibility(View.VISIBLE);
+            btnSend.setOnClickListener(v -> sendAll(session));
+        } else {
+            btnSend.setVisibility(View.GONE);
+        }
+
+        // Betala-knapp
         Button btnPay = findViewById(R.id.btnSendToKitchen);
         btnPay.setText("💳  Betala");
         btnPay.setVisibility(View.VISIBLE);
@@ -207,6 +191,24 @@ public class ReviewOrderActivity extends AppCompatActivity {
             i.putExtra("total", session.total());
             startActivity(i);
         });
+    }
+
+    private void sendAll(Cart.CartSession session) {
+        boolean anything = false;
+        for (int slot = 0; slot <= 3; slot++) {
+            List<OrderItem> pending = session.getPendingForSlot(slot);
+            if (pending.isEmpty()) continue;
+            if (slot != 0) { // slot 0 = dryck → bar, läggs ej i KitchenDataStore
+                KitchenDataStore.getInstance().addOrder(
+                        Cart.getActiveTable(), slot, pending);
+            }
+            session.markSlotSent(slot);
+            anything = true;
+        }
+        if (anything) {
+            Toast.makeText(this, "✓ Beställning skickad!", Toast.LENGTH_SHORT).show();
+            renderSections();
+        }
     }
 
     private void showCommentDialog(OrderItem item) {

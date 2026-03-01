@@ -13,8 +13,6 @@ import java.util.*;
 
 public class TableSelectActivity extends AppCompatActivity {
 
-    // I verkligt läge: hämta från backend
-    private final boolean[] occupied = {false,true,true,false,false,true,false,false,true,false};
     private final Handler clockHandler = new Handler();
     private TextView tvTime;
 
@@ -32,7 +30,7 @@ public class TableSelectActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        buildGrid(); // rita om varje gång vi kommer tillbaka – uppdaterar öppna notor
+        buildGrid();
     }
 
     private void buildGrid() {
@@ -41,20 +39,16 @@ public class TableSelectActivity extends AppCompatActivity {
 
         for (int i = 0; i < 10; i++) {
             final int num = i + 1;
-            boolean occ      = occupied[i];
-            boolean hasNota  = Cart.hasOpenSession(num);
+            boolean hasNota = Cart.hasOpenSession(num);
 
             LinearLayout card = new LinearLayout(this);
             card.setOrientation(LinearLayout.VERTICAL);
             card.setGravity(Gravity.CENTER);
 
-            // Färg: mörkgrå = ledig | mörk orange = upptaget | guld = öppen nota
+            // Ledig = mörkgrå | Öppen nota = guld-ton
             int bgColor = hasNota
-                    ? Color.parseColor("#3D2E00")   // guld-ton = aktiv nota
-                    : occ
-                    ? Color.parseColor("#2A1A0E") // mörk orange = upptaget
-                    : Color.parseColor("#252525"); // mörk grå = ledig
-
+                    ? Color.parseColor("#3D2E00")
+                    : Color.parseColor("#252525");
             card.setBackgroundColor(bgColor);
 
             GridLayout.LayoutParams p = new GridLayout.LayoutParams();
@@ -65,22 +59,17 @@ public class TableSelectActivity extends AppCompatActivity {
             p.height = dp(100);
             card.setLayoutParams(p);
 
-            // Bordsnummer
             TextView tvNum = new TextView(this);
             tvNum.setText(String.valueOf(num));
             tvNum.setTextSize(26);
             tvNum.setTypeface(null, Typeface.BOLD);
             tvNum.setTextColor(Color.parseColor("#EEEEEE"));
 
-            // Status-text
             TextView tvSt = new TextView(this);
             tvSt.setTextSize(11);
             if (hasNota) {
                 tvSt.setText("Öppen nota");
                 tvSt.setTextColor(Color.parseColor("#C9A961"));
-            } else if (occ) {
-                tvSt.setText("Upptaget");
-                tvSt.setTextColor(Color.parseColor("#FF6B6B"));
             } else {
                 tvSt.setText("Ledig");
                 tvSt.setTextColor(Color.parseColor("#4ECDC4"));
@@ -91,7 +80,7 @@ public class TableSelectActivity extends AppCompatActivity {
             card.setClickable(true);
             card.setFocusable(true);
             card.setOnClickListener(v -> {
-                Cart.openTable(num); // öppnar eller återhämtar befintlig session
+                Cart.openTable(num);
                 startActivity(new Intent(this, OrderActivity.class));
             });
 

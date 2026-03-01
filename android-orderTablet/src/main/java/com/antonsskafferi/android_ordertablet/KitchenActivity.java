@@ -8,7 +8,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import androidx.annotation.NonNull;
 
 public class KitchenActivity extends AppCompatActivity {
 
@@ -24,7 +27,6 @@ public class KitchenActivity extends AppCompatActivity {
         super.onCreate(s);
         setContentView(R.layout.activity_kitchen);
 
-        // ← BACK-knapp
         findViewById(R.id.btnKitchenBack).setOnClickListener(v -> finish());
 
         tvClock = findViewById(R.id.tvClock);
@@ -37,24 +39,56 @@ public class KitchenActivity extends AppCompatActivity {
             if (fullyDone) {
                 KitchenOrder done = activeOrders.get(pos);
                 KitchenDataStore.getInstance().removeOrder(done.tableNumber);
-                activeOrders.remove(pos);
-                adapter.notifyItemRemoved(pos);
-            } else {
-                adapter.notifyItemChanged(pos);
             }
-            updateUI();
+            loadOrders(); // ladda om hela listan oavsett
         });
         rv.setAdapter(adapter);
+
+        // Tryck var som helst på skärmen = markera nästa kurs som klar
+        rv.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull android.view.MotionEvent e) {
+                if (e.getAction() == android.view.MotionEvent.ACTION_UP && !activeOrders.isEmpty()) {
+                    KitchenOrder first = activeOrders.get(0);
+                    KitchenOrder.Course next = first.currentCourse();
+                    if (next != null) {
+                        next.doneAt = System.currentTimeMillis();
+                        if (first.isFullyDone()) {
+                            KitchenDataStore.getInstance().removeOrder(first.tableNumber);
+                        }
+                        loadOrders();
+                    }
+                }
+                return false; // false = låt RecyclerView hantera resten normalt
+            }
+        });
 
         startClock();
         startPolling();
         loadOrders();
     }
 
-    /** Hämtar färska ordrar från KitchenDataStore och uppdaterar listan. */
+    /**
+     * Hämtar ordrar från KitchenDataStore och sorterar på aktiv kurs:
+     * slot 0 (Dryck/Bar) → 1 (Förrätt) → 2 (Varmrätt) → 3 (Efterrätt).
+     * Inom samma slot hamnar äldst överst (createdAt ASC).
+     */
     private void loadOrders() {
+        List<KitchenOrder> fresh = KitchenDataStore.getInstance().getActiveOrders();
+
+        fresh.sort((a, b) -> {
+            KitchenOrder.Course ca = a.currentCourse();
+            KitchenOrder.Course cb = b.currentCourse();
+            int slotA = ca != null ? ca.slot : 99;
+            int slotB = cb != null ? cb.slot : 99;
+            if (slotA != slotB) return Integer.compare(slotA, slotB);
+            long tA = ca != null ? ca.createdAt : Long.MAX_VALUE;
+            long tB = cb != null ? cb.createdAt : Long.MAX_VALUE;
+            return Long.compare(tA, tB);
+        });
+
         activeOrders.clear();
-        activeOrders.addAll(KitchenDataStore.getInstance().getActiveOrders());
+        activeOrders.addAll(fresh);
         adapter.notifyDataSetChanged();
         updateUI();
     }
@@ -69,14 +103,14 @@ public class KitchenActivity extends AppCompatActivity {
         clockHandler.post(new Runnable() {
             public void run() {
                 tvClock.setText(new SimpleDateFormat("HH:mm",
-                        Locale.getDefault()).format(new Date()));
+                        Locale.getDefault()).format(new java.util.Date()));
                 adapter.notifyDataSetChanged(); // uppdatera tidsbadges
                 clockHandler.postDelayed(this, 60_000);
             }
         });
     }
 
-    /** Pollar var 5:e sekund (ersätts med WebSocket när backend är klar). */
+    /** Pollar var 5:e sekund – ersätts med backend-anrop när API är klart. */
     private void startPolling() {
         pollHandler.postDelayed(new Runnable() {
             public void run() {
@@ -89,7 +123,7 @@ public class KitchenActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadOrders(); // ladda om direkt när vi kommer hit
+        loadOrders();
     }
 
     @Override
