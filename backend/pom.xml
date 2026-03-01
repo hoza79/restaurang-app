@@ -12,18 +12,18 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.target>25</maven.compiler.target>
-    <maven.compiler.source>25</maven.compiler.source>
+      <maven.compiler.target>21</maven.compiler.target>
+      <maven.compiler.source>21</maven.compiler.source>
     <junit.version>5.13.2</junit.version>
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>jakarta.platform</groupId>
-      <artifactId>jakarta.jakartaee-api</artifactId>
-      <version>11.0.0</version>
-      <scope>provided</scope>
-    </dependency>
+      <dependency>
+          <groupId>jakarta.platform</groupId>
+          <artifactId>jakarta.jakartaee-api</artifactId>
+          <version>10.0.0</version>
+          <scope>provided</scope>
+      </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
