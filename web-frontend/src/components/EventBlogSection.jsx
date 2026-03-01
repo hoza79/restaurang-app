@@ -1,20 +1,26 @@
-import { useState } from 'react'
-import { eventBlog } from '../data/mockData'
+import { useState, useEffect } from 'react'
+import { getMusicEvents } from '../api/menuApi'
+
+function parseDate(dateStr) {
+  if (!dateStr) return { day: '?', month: '?' }
+  const d = new Date(dateStr)
+  const month = d.toLocaleString('sv-SE', { month: 'short' })
+  return {
+    day: d.getDate(),
+    month: month.charAt(0).toUpperCase() + month.slice(1),
+  }
+}
 
 // ett event-kort med likes och kommentarer
 function EventCard({ event }) {
   const [liked, setLiked] = useState(false)
-  const [likes, setLikes] = useState(event.likes)
+  const [likes, setLikes] = useState(0)
   const [showComments, setShowComments] = useState(false)
-  const [comments, setComments] = useState(event.comments)
+  const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
 
   const handleLike = () => {
-    if (liked) {
-      setLikes(likes - 1)
-    } else {
-      setLikes(likes + 1)
-    }
+    setLikes(liked ? likes - 1 : likes + 1)
     setLiked(!liked)
   }
 
@@ -24,16 +30,17 @@ function EventCard({ event }) {
     setNewComment('')
   }
 
+  const { day, month } = parseDate(event.date)
+
   return (
     <div className="event-card">
       <div className="event-card-top">
         <div className="event-date-block">
-          <div className="event-day">{event.date.day}</div>
-          <div className="event-month">{event.date.month}</div>
+          <div className="event-day">{day}</div>
+          <div className="event-month">{month}</div>
         </div>
         <div className="event-info">
-          <h3>{event.artist}</h3>
-          <p className="event-genre">{event.genre}</p>
+          <h3>{event.title}</h3>
           <p className="event-desc">{event.description}</p>
         </div>
       </div>
@@ -74,6 +81,20 @@ function EventCard({ event }) {
 }
 
 function EventBlogSection() {
+  const [previous, setPrevious] = useState([])
+  const [upcoming, setUpcoming] = useState([])
+
+  useEffect(() => {
+    getMusicEvents().then(events => {
+      const now = new Date()
+      const sorted = [...events].sort((a, b) => new Date(a.date) - new Date(b.date))
+      const prev = sorted.filter(e => e.date && new Date(e.date) < now).slice(-3)
+      const next = sorted.filter(e => e.date && new Date(e.date) >= now).slice(0, 3)
+      setPrevious(prev)
+      setUpcoming(next)
+    })
+  }, [])
+
   return (
     <section className="event-blog" id="events">
       <div className="container">
@@ -88,7 +109,7 @@ function EventBlogSection() {
           {/* tidigare events */}
           <div className="event-column">
             <p className="event-column-label">Tidigare event</p>
-            {eventBlog.previous.map(event => (
+            {previous.map(event => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>
@@ -96,7 +117,7 @@ function EventBlogSection() {
           {/* kommande events */}
           <div className="event-column">
             <p className="event-column-label">Kommande event</p>
-            {eventBlog.upcoming.map(event => (
+            {upcoming.map(event => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>

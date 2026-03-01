@@ -1,4 +1,4 @@
-import { lunchWeek, carteMenu, artists, bookings } from '../data/mockData';
+import { lunchWeek, carteMenu, artists } from '../data/mockData';
 
 const DAY_NAMES = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
 
@@ -148,18 +148,86 @@ export async function deleteCarteItem(id) {
   if (!res.ok) throw new Error('Kunde inte ta bort rätten')
 }
 
-export async function getArtists() {
-  // inget API ännu
-  return artists;
+// hämtar alla musikevenemang, fallback till mockData
+export async function getMusicEvents() {
+  try {
+    const res = await fetch('/api/music')
+    if (!res.ok) throw new Error('API svarade inte')
+    return await res.json()
+  } catch {
+    return artists.map(a => ({
+      id: a.id,
+      title: a.name,
+      description: a.description,
+      date: null,
+      imgPath: a.image || null,
+    }))
+  }
 }
 
+// POST nytt musikevenemang
+export async function addMusicEvent({ title, description, date, imgPath }) {
+  const res = await fetch('/api/music', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, description, date, imgPath }),
+  })
+  if (!res.ok) throw new Error('Kunde inte lägga till evenemanget')
+}
+
+// tar bort ett musikevenemang via id
+export async function deleteMusicEvent(eventId) {
+  const res = await fetch(`/api/music/${eventId}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error('Kunde inte ta bort evenemanget')
+}
+
+// uppdaterar ett musikevenemang via id
+export async function updateMusicEvent(eventId, { title, description, date, imgPath }) {
+  const res = await fetch(`/api/music/${eventId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, description, date, imgPath }),
+  })
+  if (!res.ok) throw new Error('Kunde inte uppdatera evenemanget')
+}
+
+// hämtar alla bokningar, fallback till tom lista
 export async function getBookings() {
-  // inget API ännu
-  return bookings;
+  try {
+    const res = await fetch('/api/bookings')
+    if (!res.ok) throw new Error('API svarade inte')
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+// POST ny bokning
+export async function addBooking({ firstName, lastName, phoneNumber, guestCount, date }) {
+  const res = await fetch('/api/bookings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ firstName, lastName, phoneNumber, guestCount, date, tableId: null, tableNumber: null }),
+  })
+  if (!res.ok) throw new Error('Kunde inte lägga till bokningen')
+}
+
+// tar bort en bokning via id
+export async function deleteBooking(bookingId) {
+  const res = await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error('Kunde inte ta bort bokningen')
+}
+
+// uppdaterar en bokning via id
+export async function updateBooking(bookingId, { firstName, lastName, phoneNumber, guestCount, date, tableId }) {
+  const res = await fetch(`/api/bookings/${bookingId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ firstName, lastName, phoneNumber, guestCount, date, tableId: tableId ?? null, tableNumber: null }),
+  })
+  if (!res.ok) throw new Error('Kunde inte uppdatera bokningen')
 }
 
 export async function createBooking(data) {
-  // inget API ännu
-  console.log('Booking submitted (mock):', data);
-  return { success: true };
+  return addBooking(data)
 }

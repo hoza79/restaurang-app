@@ -1,62 +1,92 @@
-import { useState } from 'react'
-import { bookings as initialBookings } from '../../data/mockData'
+import { useState, useEffect } from 'react'
+import { getBookings, addBooking, deleteBooking, updateBooking } from '../../api/menuApi'
 
-const STATUS_LABELS = {
-  booked: 'Bokad',
-  free: 'Ledig',
-  unavailable: 'Ej tillgänglig',
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-'
+  const d = new Date(dateStr)
+  return d.toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })
 }
 
 function BookingAdmin() {
-  const [bookingList, setBookingList] = useState(initialBookings)
+  const [bookingList, setBookingList] = useState([])
+  const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
-  const [newBooking, setNewBooking] = useState({ table: '', name: '', guests: '', time: '', status: 'booked' })
+  const [newBooking, setNewBooking] = useState({ firstName: '', lastName: '', phoneNumber: '', guestCount: '', date: '' })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [editValues, setEditValues] = useState({})
 
-  const bookedCount = bookingList.filter(b => b.status === 'booked').length
-  const freeCount = bookingList.filter(b => b.status === 'free').length
-  const totalGuests = bookingList.reduce((sum, b) => sum + b.guests, 0)
+  useEffect(() => { fetchBookings() }, [])
 
-  const handleAdd = () => {
-    if (!newBooking.table) return
-    setBookingList([
-      ...bookingList,
-      {
-        id: Date.now(),
-        table: parseInt(newBooking.table) || 0,
-        name: newBooking.name,
-        guests: parseInt(newBooking.guests) || 0,
-        time: newBooking.time,
-        status: newBooking.status,
-      }
-    ])
-    setNewBooking({ table: '', name: '', guests: '', time: '', status: 'booked' })
-    setShowAdd(false)
+  function fetchBookings() {
+    setLoading(true)
+    getBookings()
+      .then(data => { setBookingList(data); setLoading(false) })
+      .catch(() => setLoading(false))
   }
 
-  const handleDelete = (id) => {
-    setBookingList(bookingList.filter(b => b.id !== id))
+  const totalGuests = bookingList.reduce((sum, b) => sum + (b.guestCount || 0), 0)
+
+  const handleAdd = async () => {
+    if (!newBooking.firstName) return
+    setSaving(true)
+    setError(null)
+    try {
+      await addBooking({
+        ...newBooking,
+        guestCount: parseInt(newBooking.guestCount) || 0,
+      })
+      setNewBooking({ firstName: '', lastName: '', phoneNumber: '', guestCount: '', date: '' })
+      setShowAdd(false)
+      fetchBookings()
+    } catch {
+      setError('Kunde inte lägga till bokningen')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleEditStart = (booking) => {
-    setEditingId(booking.id)
+  const handleDelete = async (id) => {
+    setError(null)
+    try {
+      await deleteBooking(id)
+      fetchBookings()
+    } catch {
+      setError('Kunde inte ta bort bokningen')
+    }
+  }
+
+  const handleEditStart = (b) => {
+    setEditingId(b.bookingId)
     setEditValues({
-      name: booking.name,
-      guests: booking.guests,
-      time: booking.time,
-      status: booking.status,
+      firstName: b.firstName,
+      lastName: b.lastName,
+      phoneNumber: b.phoneNumber || '',
+      guestCount: b.guestCount,
+      date: b.date ? b.date.slice(0, 16) : '',
+      tableId: b.tableId ?? null,
     })
   }
 
-  const handleEditSave = (id) => {
-    setBookingList(bookingList.map(b =>
-      b.id === id
-        ? { ...b, name: editValues.name, guests: parseInt(editValues.guests) || 0, time: editValues.time, status: editValues.status }
-        : b
-    ))
-    setEditingId(null)
+  const handleEditSave = async (id) => {
+    setSaving(true)
+    setError(null)
+    try {
+      await updateBooking(id, {
+        ...editValues,
+        guestCount: parseInt(editValues.guestCount) || 0,
+      })
+      setEditingId(null)
+      fetchBookings()
+    } catch {
+      setError('Kunde inte uppdatera bokningen')
+    } finally {
+      setSaving(false)
+    }
   }
+
+  if (loading) return <p>Laddar...</p>
 
   return (
     <>
@@ -67,12 +97,8 @@ function BookingAdmin() {
       {/* statistikrutor */}
       <div className="booking-stats">
         <div className="stat-card">
-          <div className="number">{bookedCount}</div>
-          <div className="label">Bokade bord</div>
-        </div>
-        <div className="stat-card">
-          <div className="number">{freeCount}</div>
-          <div className="label">Lediga bord</div>
+          <div className="number">{bookingList.length}</div>
+          <div className="label">Bokningar</div>
         </div>
         <div className="stat-card">
           <div className="number">{totalGuests}</div>
@@ -82,7 +108,7 @@ function BookingAdmin() {
 
       <div className="card">
         <div className="card-header">
-          <h3>Bordöversikt - Ikväll</h3>
+          <h3>Bordöversikt</h3>
           <button className="btn btn-outline btn-sm" onClick={() => setShowAdd(!showAdd)}>
             + Lägg till bokning
           </button>
@@ -92,126 +118,79 @@ function BookingAdmin() {
           <div className="inline-form">
             <div className="form-row">
               <div>
-                <label>Bordsnr</label>
-                <input
-                  type="number"
-                  placeholder="11"
-                  value={newBooking.table}
-                  onChange={(e) => setNewBooking({ ...newBooking, table: e.target.value })}
-                />
+                <label>Förnamn</label>
+                <input type="text" placeholder="Förnamn" value={newBooking.firstName} onChange={(e) => setNewBooking({ ...newBooking, firstName: e.target.value })} />
               </div>
               <div>
-                <label>Status</label>
-                <select
-                  value={newBooking.status}
-                  onChange={(e) => setNewBooking({ ...newBooking, status: e.target.value })}
-                >
-                  <option value="booked">Bokad</option>
-                  <option value="free">Ledig</option>
-                  <option value="unavailable">Ej tillgänglig</option>
-                </select>
+                <label>Efternamn</label>
+                <input type="text" placeholder="Efternamn" value={newBooking.lastName} onChange={(e) => setNewBooking({ ...newBooking, lastName: e.target.value })} />
               </div>
             </div>
             <div className="form-row">
               <div>
-                <label>Namn</label>
-                <input
-                  type="text"
-                  placeholder="Efternamn"
-                  value={newBooking.name}
-                  onChange={(e) => setNewBooking({ ...newBooking, name: e.target.value })}
-                />
+                <label>Telefon</label>
+                <input type="text" placeholder="070-000 00 00" value={newBooking.phoneNumber} onChange={(e) => setNewBooking({ ...newBooking, phoneNumber: e.target.value })} />
               </div>
               <div>
                 <label>Gäster</label>
-                <input
-                  type="number"
-                  placeholder="2"
-                  value={newBooking.guests}
-                  onChange={(e) => setNewBooking({ ...newBooking, guests: e.target.value })}
-                />
+                <input type="number" placeholder="2" min="1" value={newBooking.guestCount} onChange={(e) => setNewBooking({ ...newBooking, guestCount: e.target.value })} />
               </div>
             </div>
             <div style={{ marginBottom: '1rem' }}>
-              <label>Tid</label>
-              <input
-                type="text"
-                placeholder="19:00"
-                value={newBooking.time}
-                onChange={(e) => setNewBooking({ ...newBooking, time: e.target.value })}
-              />
+              <label>Datum &amp; tid</label>
+              <input type="datetime-local" value={newBooking.date} onChange={(e) => setNewBooking({ ...newBooking, date: e.target.value })} />
             </div>
+            {error && <p style={{ color: 'red', margin: '0.5rem 0' }}>{error}</p>}
             <div className="form-actions">
               <button className="btn btn-outline btn-sm" onClick={() => setShowAdd(false)}>Avbryt</button>
-              <button className="btn btn-gold btn-sm" onClick={handleAdd}>Lägg till</button>
+              <button className="btn btn-gold btn-sm" onClick={handleAdd} disabled={saving}>
+                {saving ? 'Sparar...' : 'Lägg till'}
+              </button>
             </div>
           </div>
         )}
 
         <table className="admin-table">
           <thead>
-            <tr><th>Bord</th><th>Status</th><th>Namn</th><th>Gäster</th><th>Tid</th><th></th></tr>
+            <tr><th>Bord</th><th>Namn</th><th>Telefon</th><th>Gäster</th><th>Tid</th><th></th></tr>
           </thead>
           <tbody>
             {bookingList.map((b) => (
-              <tr key={b.id}>
-                {editingId === b.id ? (
-                  // redigeringsläge
+              <tr key={b.bookingId}>
+                {editingId === b.bookingId ? (
                   <>
-                    <td>Bord {b.table}</td>
+                    <td>{b.tableNumber ? `Bord ${b.tableNumber}` : '-'}</td>
                     <td>
-                      <select
-                        value={editValues.status}
-                        onChange={(e) => setEditValues({ ...editValues, status: e.target.value })}
-                      >
-                        <option value="booked">Bokad</option>
-                        <option value="free">Ledig</option>
-                        <option value="unavailable">Ej tillgänglig</option>
-                      </select>
+                      <input type="text" value={editValues.firstName} onChange={(e) => setEditValues({ ...editValues, firstName: e.target.value })} style={{ width: '90px' }} />
+                      {' '}
+                      <input type="text" value={editValues.lastName} onChange={(e) => setEditValues({ ...editValues, lastName: e.target.value })} style={{ width: '90px' }} />
                     </td>
                     <td>
-                      <input
-                        type="text"
-                        value={editValues.name}
-                        onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
-                      />
+                      <input type="text" value={editValues.phoneNumber} onChange={(e) => setEditValues({ ...editValues, phoneNumber: e.target.value })} style={{ width: '120px' }} />
                     </td>
                     <td>
-                      <input
-                        type="number"
-                        value={editValues.guests}
-                        onChange={(e) => setEditValues({ ...editValues, guests: e.target.value })}
-                        style={{ width: '60px' }}
-                      />
+                      <input type="number" min="1" value={editValues.guestCount} onChange={(e) => setEditValues({ ...editValues, guestCount: e.target.value })} style={{ width: '60px' }} />
                     </td>
                     <td>
-                      <input
-                        type="text"
-                        value={editValues.time}
-                        onChange={(e) => setEditValues({ ...editValues, time: e.target.value })}
-                        style={{ width: '80px' }}
-                      />
+                      <input type="datetime-local" value={editValues.date} onChange={(e) => setEditValues({ ...editValues, date: e.target.value })} style={{ width: '180px' }} />
                     </td>
                     <td className="actions">
                       <button className="btn btn-outline btn-sm" onClick={() => setEditingId(null)}>Avbryt</button>
-                      <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(b.id)}>Spara</button>
+                      <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(b.bookingId)} disabled={saving}>
+                        {saving ? '...' : 'Spara'}
+                      </button>
                     </td>
                   </>
                 ) : (
-                  // normalläge
                   <>
-                    <td>Bord {b.table}</td>
-                    <td>
-                      <span className={`table-status status-${b.status}`}>
-                        {STATUS_LABELS[b.status] || b.status}
-                      </span>
-                    </td>
-                    <td>{b.name || '-'}</td>
-                    <td>{b.guests || '-'}</td>
-                    <td>{b.time || '-'}</td>
+                    <td>{b.tableNumber ? `Bord ${b.tableNumber}` : '-'}</td>
+                    <td>{b.firstName} {b.lastName}</td>
+                    <td>{b.phoneNumber || '-'}</td>
+                    <td>{b.guestCount}</td>
+                    <td>{formatDateTime(b.date)}</td>
                     <td className="actions">
                       <button className="btn btn-outline btn-sm" onClick={() => handleEditStart(b)}>Redigera</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(b.id)}>Ta bort</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(b.bookingId)}>Ta bort</button>
                     </td>
                   </>
                 )}
@@ -219,6 +198,8 @@ function BookingAdmin() {
             ))}
           </tbody>
         </table>
+
+        {error && <p style={{ padding: '1rem', color: 'red' }}>{error}</p>}
       </div>
     </>
   )

@@ -1,53 +1,84 @@
-import { useState } from 'react'
-import { artists as initialArtists } from '../../data/mockData'
+import { useState, useEffect } from 'react'
+import { getMusicEvents, addMusicEvent, deleteMusicEvent, updateMusicEvent } from '../../api/menuApi'
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-'
+  const d = new Date(dateStr)
+  return d.toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })
+}
 
 function MusicAdmin() {
-  const [artistList, setArtistList] = useState(initialArtists)
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
-  const [newArtist, setNewArtist] = useState({ name: '', genre: '', description: '', date: '', time: '', image: '' })
-  // håller reda på vilken artist som redigeras
+  const [newEvent, setNewEvent] = useState({ title: '', description: '', date: '', imgPath: '' })
+  const [imagePreview, setImagePreview] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [editValues, setEditValues] = useState({})
 
-  const handleAdd = () => {
-    if (!newArtist.name) return
-    setArtistList([
-      ...artistList,
-      {
-        id: Date.now(),
-        name: newArtist.name,
-        genre: newArtist.genre,
-        description: newArtist.description,
-        date: { day: '?', month: newArtist.date, weekday: '' },
-        time: newArtist.time,
-        image: newArtist.image,
-      }
-    ])
-    setNewArtist({ name: '', genre: '', description: '', date: '', time: '', image: '' })
-    setShowAdd(false)
+  useEffect(() => { fetchEvents() }, [])
+
+  function fetchEvents() {
+    setLoading(true)
+    getMusicEvents()
+      .then(data => { setEvents(data); setLoading(false) })
+      .catch(() => setLoading(false))
   }
 
-  const handleDelete = (id) => {
-    setArtistList(artistList.filter(a => a.id !== id))
+  const handleAdd = async () => {
+    if (!newEvent.title) return
+    setSaving(true)
+    setError(null)
+    try {
+      await addMusicEvent(newEvent)
+      setNewEvent({ title: '', description: '', date: '', imgPath: '' })
+      setImagePreview(null)
+      setShowAdd(false)
+      fetchEvents()
+    } catch {
+      setError('Kunde inte lägga till evenemanget')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleEditStart = (artist) => {
-    setEditingId(artist.id)
+  const handleDelete = async (id) => {
+    setError(null)
+    try {
+      await deleteMusicEvent(id)
+      fetchEvents()
+    } catch {
+      setError('Kunde inte ta bort evenemanget')
+    }
+  }
+
+  const handleEditStart = (event) => {
+    setEditingId(event.id)
     setEditValues({
-      name: artist.name,
-      genre: artist.genre,
-      description: artist.description,
-      time: artist.time,
-      image: artist.image || '',
+      title: event.title,
+      description: event.description || '',
+      date: event.date ? event.date.slice(0, 16) : '',
+      imgPath: event.imgPath || '',
     })
   }
 
-  const handleEditSave = (id) => {
-    setArtistList(artistList.map(a =>
-      a.id === id ? { ...a, ...editValues } : a
-    ))
-    setEditingId(null)
+  const handleEditSave = async (id) => {
+    setSaving(true)
+    setError(null)
+    try {
+      await updateMusicEvent(id, editValues)
+      setEditingId(null)
+      fetchEvents()
+    } catch {
+      setError('Kunde inte uppdatera evenemanget')
+    } finally {
+      setSaving(false)
+    }
   }
+
+  if (loading) return <p>Laddar...</p>
 
   return (
     <>
@@ -57,9 +88,9 @@ function MusicAdmin() {
 
       <div className="card">
         <div className="card-header">
-          <h3>Artister</h3>
+          <h3>Musikevenemang</h3>
           <button className="btn btn-outline btn-sm" onClick={() => setShowAdd(!showAdd)}>
-            + Lägg till artist
+            + Lägg till
           </button>
         </div>
 
@@ -67,78 +98,93 @@ function MusicAdmin() {
           <div className="inline-form">
             <div className="form-row">
               <div>
-                <label>Artistnamn</label>
-                <input type="text" placeholder="Namn" value={newArtist.name} onChange={(e) => setNewArtist({ ...newArtist, name: e.target.value })} />
+                <label>Titel</label>
+                <input type="text" placeholder="Artistnamn / titel" value={newEvent.title} onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })} />
               </div>
               <div>
-                <label>Genre</label>
-                <input type="text" placeholder="Jazz, Blues..." value={newArtist.genre} onChange={(e) => setNewArtist({ ...newArtist, genre: e.target.value })} />
-              </div>
-            </div>
-            <div className="form-row">
-              <div>
-                <label>Datum</label>
-                <input type="date" value={newArtist.date} onChange={(e) => setNewArtist({ ...newArtist, date: e.target.value })} />
-              </div>
-              <div>
-                <label>Tid</label>
-                <input type="text" placeholder="Kl. 19:00" value={newArtist.time} onChange={(e) => setNewArtist({ ...newArtist, time: e.target.value })} />
+                <label>Datum &amp; tid</label>
+                <input type="datetime-local" value={newEvent.date} onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })} />
               </div>
             </div>
             <div style={{ marginBottom: '1rem' }}>
               <label>Beskrivning</label>
-              <input type="text" placeholder="Kort beskrivning" value={newArtist.description} onChange={(e) => setNewArtist({ ...newArtist, description: e.target.value })} />
+              <input type="text" placeholder="Kort beskrivning" value={newEvent.description} onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })} style={{ width: '100%' }} />
             </div>
-            {/* bildfält för artisten */}
             <div style={{ marginBottom: '1rem' }}>
-              <label>Bild-URL</label>
-              <input type="text" placeholder="https://..." value={newArtist.image} onChange={(e) => setNewArtist({ ...newArtist, image: e.target.value })} />
+              <label>Bild</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', marginBottom: 0 }}>
+                  Välj bild
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files[0]
+                      if (!file) return
+                      setImagePreview(URL.createObjectURL(file))
+                      setNewEvent({ ...newEvent, imgPath: file.name })
+                    }}
+                  />
+                </label>
+                {imagePreview
+                  ? <img src={imagePreview} alt="Förhandsvisning" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '4px' }} />
+                  : <span style={{ color: 'var(--text-muted-on-light)', fontSize: '0.85rem' }}>Ingen bild vald</span>
+                }
+              </div>
             </div>
+            {error && <p style={{ color: 'red', margin: '0.5rem 0' }}>{error}</p>}
             <div className="form-actions">
-              <button className="btn btn-outline btn-sm" onClick={() => setShowAdd(false)}>Avbryt</button>
-              <button className="btn btn-gold btn-sm" onClick={handleAdd}>Lägg till</button>
+              <button className="btn btn-outline btn-sm" onClick={() => { setShowAdd(false); setImagePreview(null) }}>Avbryt</button>
+              <button className="btn btn-gold btn-sm" onClick={handleAdd} disabled={saving}>
+                {saving ? 'Sparar...' : 'Lägg till'}
+              </button>
             </div>
           </div>
         )}
 
         <table className="admin-table">
           <thead>
-            <tr><th>Bild</th><th>Datum</th><th>Artist</th><th>Genre</th><th>Tid</th><th></th></tr>
+            <tr><th>Bild</th><th>Datum</th><th>Titel</th><th>Beskrivning</th><th></th></tr>
           </thead>
           <tbody>
-            {artistList.map((artist) => (
-              <tr key={artist.id}>
-                {editingId === artist.id ? (
-                  // redigeringsläge
+            {events.map((event) => (
+              <tr key={event.id}>
+                {editingId === event.id ? (
                   <>
                     <td>
-                      <input type="text" placeholder="Bild-URL" value={editValues.image} onChange={(e) => setEditValues({ ...editValues, image: e.target.value })} />
+                      <input type="text" placeholder="Bild-URL" value={editValues.imgPath} onChange={(e) => setEditValues({ ...editValues, imgPath: e.target.value })} />
                     </td>
-                    <td>{artist.date.weekday} {artist.date.day} {artist.date.month}</td>
-                    <td><input type="text" value={editValues.name} onChange={(e) => setEditValues({ ...editValues, name: e.target.value })} /></td>
-                    <td><input type="text" value={editValues.genre} onChange={(e) => setEditValues({ ...editValues, genre: e.target.value })} /></td>
-                    <td><input type="text" value={editValues.time} onChange={(e) => setEditValues({ ...editValues, time: e.target.value })} /></td>
+                    <td>
+                      <input type="datetime-local" value={editValues.date} onChange={(e) => setEditValues({ ...editValues, date: e.target.value })} style={{ width: '180px' }} />
+                    </td>
+                    <td>
+                      <input type="text" value={editValues.title} onChange={(e) => setEditValues({ ...editValues, title: e.target.value })} />
+                    </td>
+                    <td>
+                      <input type="text" value={editValues.description} onChange={(e) => setEditValues({ ...editValues, description: e.target.value })} />
+                    </td>
                     <td className="actions">
                       <button className="btn btn-outline btn-sm" onClick={() => setEditingId(null)}>Avbryt</button>
-                      <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(artist.id)}>Spara</button>
+                      <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(event.id)} disabled={saving}>
+                        {saving ? '...' : 'Spara'}
+                      </button>
                     </td>
                   </>
                 ) : (
-                  // normalläge - visar miniatyrbild om den finns
                   <>
                     <td>
-                      {artist.image
-                        ? <img src={artist.image} alt={artist.name} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />
+                      {event.imgPath
+                        ? <img src={event.imgPath} alt={event.title} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />
                         : <span style={{ color: 'var(--text-muted-on-light)', fontSize: '0.8rem' }}>Ingen bild</span>
                       }
                     </td>
-                    <td>{artist.date.weekday} {artist.date.day} {artist.date.month}</td>
-                    <td>{artist.name}</td>
-                    <td>{artist.genre}</td>
-                    <td>{artist.time}</td>
+                    <td>{formatDateTime(event.date)}</td>
+                    <td>{event.title}</td>
+                    <td>{event.description}</td>
                     <td className="actions">
-                      <button className="btn btn-outline btn-sm" onClick={() => handleEditStart(artist)}>Redigera</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(artist.id)}>Ta bort</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleEditStart(event)}>Redigera</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(event.id)}>Ta bort</button>
                     </td>
                   </>
                 )}
@@ -146,6 +192,8 @@ function MusicAdmin() {
             ))}
           </tbody>
         </table>
+
+        {error && <p style={{ padding: '1rem', color: 'red' }}>{error}</p>}
       </div>
     </>
   )

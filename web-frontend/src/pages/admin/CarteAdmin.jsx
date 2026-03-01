@@ -5,7 +5,7 @@ function CarteAdmin() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [addingTo, setAddingTo] = useState(null)
-  const [newItem, setNewItem] = useState({ name: '', description: '', price: '' })
+  const [newItem, setNewItem] = useState({ name: '', description: '', price: '', beef: false })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   // håller reda på vilken rad som redigeras just nu
@@ -37,7 +37,7 @@ function CarteAdmin() {
         price: newItem.price,
         available: true,
       })
-      setNewItem({ name: '', description: '', price: '' })
+      setNewItem({ name: '', description: '', price: '', beef: false })
       setAddingTo(null)
       fetchMenu()
     } catch {
@@ -115,6 +115,16 @@ function CarteAdmin() {
                   <label>Pris</label>
                   <input type="text" placeholder="145" value={newItem.price} onChange={(e) => setNewItem({ ...newItem, price: e.target.value })} />
                 </div>
+              </div>
+              <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <label style={{ margin: 0 }}>Nötkött</label>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${newItem.beef ? 'btn-gold' : 'btn-outline'}`}
+                  onClick={() => setNewItem({ ...newItem, beef: !newItem.beef })}
+                >
+                  {newItem.beef ? 'Ja' : 'Nej'}
+                </button>
               </div>
               <div className="form-actions">
                 <button className="btn btn-outline btn-sm" onClick={() => setAddingTo(null)}>Avbryt</button>
