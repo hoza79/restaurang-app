@@ -127,11 +127,15 @@ public class LoadMenuItems {
                     "Frasiga lökringar med aioli.", 69));
 
             // Main courses
-            em.persist(new MenuItem(mainCourses, "Oxfilé med rödvinssås",
-                    "Grillad oxfilé med potatisgratäng och rödvinssås.", 295));
+            MenuItem oxfile = new MenuItem(mainCourses, "Oxfilé med rödvinssås",
+                    "Grillad oxfilé med potatisgratäng och rödvinssås.", 295);
+            oxfile.setOptions(true);
+            em.persist(oxfile);
 
-            em.persist(new MenuItem(mainCourses, "Entrecôte",
-                    "Saftig entrecôte med pommes frites och bearnaisesås.", 265));
+            MenuItem entrecot = new MenuItem(mainCourses, "Entrecôte",
+                    "Saftig entrecôte med pommes frites och bearnaisesås.", 265);
+            entrecot.setOptions(true);
+            em.persist(entrecot);
 
             em.persist(new MenuItem(mainCourses, "Hamburgare Deluxe",
                     "200g högrevsburgare med cheddar, bacon och tryffelmajonnäs.", 195));
@@ -145,8 +149,10 @@ public class LoadMenuItems {
             em.persist(new MenuItem(mainCourses, "Vegetarisk burgare",
                     "Burgare med halloumi, avokado och sötpotatispommes.", 185));
 
-            em.persist(new MenuItem(mainCourses, "Plankstek",
-                    "Oxfilé på planka med duchessepotatis och rödvinssky.", 285));
+            MenuItem plankstek = new MenuItem(mainCourses, "Plankstek",
+                    "Oxfilé på planka med duchessepotatis och rödvinssky.", 285);
+            plankstek.setOptions(true);
+            em.persist(plankstek);
 
             em.persist(new MenuItem(mainCourses, "Moules frites",
                     "Blåmusslor i vitvinssås med pommes frites.", 210));
