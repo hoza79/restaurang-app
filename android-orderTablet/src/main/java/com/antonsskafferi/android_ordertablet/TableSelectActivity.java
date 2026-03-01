@@ -13,6 +13,10 @@ import java.util.*;
 
 public class TableSelectActivity extends AppCompatActivity {
 
+    // TODO: ersätts av GET /api/tables när Retrofit kopplas
+    // true = bordet är reserverat/upptaget utan aktiv nota
+    private final boolean[] occupied = new boolean[10];
+
     private final Handler clockHandler = new Handler();
     private TextView tvTime;
 
@@ -39,15 +43,17 @@ public class TableSelectActivity extends AppCompatActivity {
 
         for (int i = 0; i < 10; i++) {
             final int num = i + 1;
+            boolean occ     = occupied[i];
             boolean hasNota = Cart.hasOpenSession(num);
 
             LinearLayout card = new LinearLayout(this);
             card.setOrientation(LinearLayout.VERTICAL);
             card.setGravity(Gravity.CENTER);
 
-            // Ledig = mörkgrå | Öppen nota = guld-ton
             int bgColor = hasNota
                     ? Color.parseColor("#3D2E00")
+                    : occ
+                    ? Color.parseColor("#2A1A0E")
                     : Color.parseColor("#252525");
             card.setBackgroundColor(bgColor);
 
@@ -70,6 +76,9 @@ public class TableSelectActivity extends AppCompatActivity {
             if (hasNota) {
                 tvSt.setText("Öppen nota");
                 tvSt.setTextColor(Color.parseColor("#C9A961"));
+            } else if (occ) {
+                tvSt.setText("Upptaget");
+                tvSt.setTextColor(Color.parseColor("#FF6B6B"));
             } else {
                 tvSt.setText("Ledig");
                 tvSt.setTextColor(Color.parseColor("#4ECDC4"));
