@@ -19,6 +19,7 @@ public class Cart {
         public Integer tableId;
         public final List<OrderItem> items = new ArrayList<>();
         public boolean paid = false;
+        public Integer orderId; // DB orderId from /api/orders
 
         CartSession(int table) { this.tableNumber = table; }
 

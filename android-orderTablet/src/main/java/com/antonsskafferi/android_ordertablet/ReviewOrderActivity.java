@@ -9,8 +9,17 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
 import java.util.List;
+import android.util.Log;
+import com.antonsskafferi.android_ordertablet.net.ApiClient;
+import com.antonsskafferi.android_ordertablet.net.CreateBatchRequest;
+import com.antonsskafferi.android_ordertablet.net.CreateBatchItemRequest;
+import java.util.Map;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ReviewOrderActivity extends AppCompatActivity {
+    private static final String TAG = "ReviewOrderActivity";
 
     private static final String[] SLOT_LABELS = {"Dryck", "Förrätt", "Varmrätt", "Efterrätt"};
     private static final int BG      = 0xFF121212;
@@ -167,16 +176,59 @@ public class ReviewOrderActivity extends AppCompatActivity {
                 bp.setMargins(0, dp(10), 0, 0);
                 btn.setLayoutParams(bp);
                 btn.setOnClickListener(v -> {
-                    // ← KOPPLINGEN: hämta pending items och push till KitchenDataStore
-                    List<OrderItem> pending = session.getPendingForSlot(fs);
-                    if (fs != 0) { // Dryck går till bar, inte KitchenDataStore
-                        KitchenDataStore.getInstance().addOrder(
-                                Cart.getActiveTable(), fs, pending);
+                    //Cart.CartSession session = Cart.current();
+
+                    if (session.orderId == null) {
+                        Toast.makeText(this, "Saknar orderId (backend). Gå tillbaka och öppna bordet igen.", Toast.LENGTH_LONG).show();
+                        return;
                     }
-                    session.markSlotSent(fs);
-                    Toast.makeText(this,
-                            "✓ " + SLOT_LABELS[fs] + " skickad!", Toast.LENGTH_SHORT).show();
-                    renderSections();
+
+                    List<OrderItem> pending = session.getPendingForSlot(fs);
+                    if (pending.isEmpty()) return;
+
+                    // Slot 0 = Dryck -> BAR (do not send to kitchen backend)
+                    if (fs == 0) {
+                        session.markSlotSent(fs);
+                        Toast.makeText(ReviewOrderActivity.this,
+                                "✓ " + SLOT_LABELS[fs] + " skickad till baren!", Toast.LENGTH_SHORT).show();
+                        renderSections();
+                        return;
+                    }
+
+                    String batchType = slotToBatchType(fs);
+
+                    List<CreateBatchItemRequest> items = new ArrayList<>();
+                    for (OrderItem it : pending) {
+                        items.add(new CreateBatchItemRequest(
+                                it.menuItemId,
+                                it.quantity,
+                                buildNotes(it)
+                        ));
+                    }
+
+                    ApiClient.api().createBatch(session.orderId, new CreateBatchRequest(batchType, items))
+                            .enqueue(new Callback<Map<String, Object>>() {
+                                @Override
+                                public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> resp) {
+                                    if (resp.isSuccessful()) {
+                                        session.markSlotSent(fs);
+                                        Toast.makeText(ReviewOrderActivity.this,
+                                                "✓ " + SLOT_LABELS[fs] + " skickad!", Toast.LENGTH_SHORT).show();
+                                        renderSections();
+                                    } else {
+                                        Toast.makeText(ReviewOrderActivity.this,
+                                                "Kunde inte skicka (" + resp.code() + ")", Toast.LENGTH_LONG).show();
+                                        Log.e(TAG, "createBatch failed: HTTP " + resp.code());
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                                    Toast.makeText(ReviewOrderActivity.this,
+                                            "Ingen kontakt med servern", Toast.LENGTH_LONG).show();
+                                    Log.e(TAG, "createBatch network failure", t);
+                                }
+                            });
                 });
                 card.addView(btn);
             } else if (allSent) {
@@ -207,6 +259,34 @@ public class ReviewOrderActivity extends AppCompatActivity {
             i.putExtra("total", session.total());
             startActivity(i);
         });
+    }
+
+    private String slotToBatchType(int slot) {
+        switch (slot) {
+            case 0: return "DRINK";
+            case 1: return "APPETIZER";
+            case 2: return "MAIN_COURSE";
+            case 3: return "DESSERT";
+            default: return "MAIN_COURSE";
+        }
+    }
+
+    private String buildNotes(OrderItem it) {
+        StringBuilder sb = new StringBuilder();
+
+        if (it.cooking != null && !it.cooking.trim().isEmpty()) {
+            sb.append(it.cooking.trim());
+        }
+        if (it.sides != null && !it.sides.isEmpty()) {
+            if (sb.length() > 0) sb.append(" · ");
+            sb.append(String.join(", ", it.sides));
+        }
+        if (it.comment != null && !it.comment.trim().isEmpty()) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append(it.comment.trim());
+        }
+
+        return sb.length() == 0 ? null : sb.toString();
     }
 
     private void showCommentDialog(OrderItem item) {

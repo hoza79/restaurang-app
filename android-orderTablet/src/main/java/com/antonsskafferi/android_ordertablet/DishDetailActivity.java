@@ -36,8 +36,8 @@ public class DishDetailActivity extends AppCompatActivity {
         EditText etComment = findViewById(R.id.etComment);
 
         findViewById(R.id.btnAddToOrder).setOnClickListener(v -> {
-            // ← FIX: 4-args konstruktor med defaultSlot
-            OrderItem item = new OrderItem(dish.name, dish.price, dish.category, defaultSlot);
+            // ← FIX: 5-args konstruktor med defaultSlot
+            OrderItem item = new OrderItem(dish.name, dish.price, dish.category, defaultSlot, dish.id);
 
             if (dish.hasCookingOptions) {
                 int selId = rg.getCheckedRadioButtonId();

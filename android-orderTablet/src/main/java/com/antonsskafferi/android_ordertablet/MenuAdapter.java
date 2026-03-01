@@ -49,7 +49,7 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.VH> {
             } else {
                 // Lägg direkt med flikens slot – ingen dialog
                 Cart.current().addItem(
-                        new OrderItem(m.name, m.price, m.category, defaultSlot));
+                        new OrderItem(m.name, m.price, m.category, defaultSlot,m.id));
                 Toast.makeText(v.getContext(),
                         m.name + " → " + SLOT_LABELS[defaultSlot],
                         Toast.LENGTH_SHORT).show();

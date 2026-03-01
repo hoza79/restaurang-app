@@ -13,8 +13,9 @@ public class OrderItem {
     public int quantity;        // antal
     public long sentAt;         // 0 = ej skickad ännu
     public Destination destination;
+    public int menuItemId;
 
-    public OrderItem(String dishName, double price, String menuCategory, int courseSlot) {
+    public OrderItem(String dishName, double price, String menuCategory, int courseSlot, int menuItemId) {
         this.dishName     = dishName;
         this.price        = price;
         this.menuCategory = menuCategory;
@@ -22,6 +23,7 @@ public class OrderItem {
         this.quantity     = 1;
         // Dryck → BAR, allt annat → KITCHEN
         this.destination  = (courseSlot == 0) ? Destination.BAR : Destination.KITCHEN;
+        this.menuItemId  = menuItemId;
     }
 
     public String courseLabel() {
