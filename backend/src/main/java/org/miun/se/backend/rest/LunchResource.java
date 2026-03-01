@@ -48,7 +48,7 @@ public class LunchResource {
         List<MenuLunchItemDto> itemsDto = new ArrayList<>();
         for(LunchAvailability meal : meals){
             MenuLunchItemDto mealDto = new MenuLunchItemDto(meal.getMenuItem().getName(), meal.getMenuItem().getMenuItemId(),
-                    meal.getMenuItem().getDescription(), meal.getMenuItem().getPrice(), meal.getMenuItem().getAvailable(), meal.getAvailableDate());
+                    meal.getMenuItem().getDescription(), meal.getMenuItem().getPrice(), meal.getMenuItem().getOptions(), meal.getAvailableDate());
             itemsDto.add(mealDto);
         }
 

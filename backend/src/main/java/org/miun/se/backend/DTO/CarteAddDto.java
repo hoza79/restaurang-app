@@ -4,5 +4,5 @@ public record CarteAddDto(
         String name,
         String description,
         Double price,
-        Boolean available
+        Boolean options
 ) {}
