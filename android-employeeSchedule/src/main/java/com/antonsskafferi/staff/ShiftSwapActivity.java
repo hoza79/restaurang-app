@@ -36,29 +36,32 @@ public class ShiftSwapActivity extends AppCompatActivity {
         // DEMONSTRATOR: Endast de två kontona
         List<String> coworkers = Arrays.asList("anna.berg@antons.se", "erik.sten@antons.se");
         
-        rv.setAdapter(new CoworkerAdapter(coworkers, email -> {
-            if (email.equalsIgnoreCase(myEmail)) {
-                Toast.makeText(this, "Du kan inte byta med dig själv!", Toast.LENGTH_SHORT).show();
-                return;
-            }
+        rv.setAdapter(new CoworkerAdapter(coworkers, new CoworkerAdapter.OnCoworkerClickListener() {
+            @Override
+            public void onClick(String email) {
+                if (email.equalsIgnoreCase(myEmail)) {
+                    Toast.makeText(ShiftSwapActivity.this, "Du kan inte byta med dig själv!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-            new AlertDialog.Builder(this)
-                .setTitle("Skicka förfrågan")
-                .setMessage("Vill du skicka en bytesförfrågan till " + email + "?")
-                .setPositiveButton("Ja", (dialog, which) -> {
-                    SwapRequest req = new SwapRequest(
-                        UUID.randomUUID().toString(),
-                        myEmail,
-                        email,
-                        shiftToSwap
-                    );
-                    SwapRequest.allRequests.add(req);
-                    
-                    Toast.makeText(this, "Förfrågan skickad till " + email, Toast.LENGTH_LONG).show();
-                    finish();
-                })
-                .setNegativeButton("Avbryt", null)
-                .show();
+                new AlertDialog.Builder(ShiftSwapActivity.this)
+                    .setTitle("Skicka förfrågan")
+                    .setMessage("Vill du skicka en bytesförfrågan till " + email + "?")
+                    .setPositiveButton("Ja", (dialog, which) -> {
+                        SwapRequest req = new SwapRequest(
+                            UUID.randomUUID().toString(),
+                            myEmail,
+                            email,
+                            shiftToSwap
+                        );
+                        SwapRequest.allRequests.add(req);
+                        
+                        Toast.makeText(ShiftSwapActivity.this, "Förfrågan skickad till " + email, Toast.LENGTH_LONG).show();
+                        finish();
+                    })
+                    .setNegativeButton("Avbryt", null)
+                    .show();
+            }
         }));
     }
 }

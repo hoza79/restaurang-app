@@ -3,14 +3,21 @@ package com.antonsskafferi.staff;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class ScheduleActivity extends AppCompatActivity {
 
@@ -18,6 +25,10 @@ public class ScheduleActivity extends AppCompatActivity {
     private SwapRequestAdapter requestAdapter;
     private ShiftAdapter shiftAdapter;
     private String userEmail;
+
+    // Veckoväljare variabler
+    private LocalDate currentMonday;
+    private DateTimeFormatter rangeFormatter = DateTimeFormatter.ofPattern("d MMM", new Locale("sv", "SE"));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +41,13 @@ public class ScheduleActivity extends AppCompatActivity {
         TextView tvWelcome = findViewById(R.id.tvWelcome);
         tvWelcome.setText("Inloggad: " + userEmail);
 
+        // Initiera veckoväljare (starta på nuvarande veckas måndag)
+        currentMonday = LocalDate.of(2023, 10, 30); // Demonstrator startar här
+        updateWeekUI();
+
+        findViewById(R.id.btnPrevWeek).setOnClickListener(v -> prevWeek());
+        findViewById(R.id.btnNextWeek).setOnClickListener(v -> nextWeek());
+
         findViewById(R.id.btnLogout).setOnClickListener(v -> {
             prefs.edit().remove("loggedInUser").apply();
             startActivity(new Intent(this, LoginActivity.class));
@@ -38,6 +56,58 @@ public class ScheduleActivity extends AppCompatActivity {
 
         setupRequestsList();
         setupScheduleList();
+        setupSwiping();
+    }
+
+    private void nextWeek() {
+        currentMonday = currentMonday.plusWeeks(1);
+        updateWeekUI();
+        refreshData();
+    }
+
+    private void prevWeek() {
+        currentMonday = currentMonday.minusWeeks(1);
+        updateWeekUI();
+        refreshData();
+    }
+
+    private void updateWeekUI() {
+        LocalDate sunday = currentMonday.plusDays(6);
+        TextView tvRange = findViewById(R.id.tvWeekRange);
+        String rangeText = currentMonday.format(rangeFormatter) + " - " + sunday.format(rangeFormatter);
+        tvRange.setText(rangeText);
+    }
+
+    private void setupSwiping() {
+        RecyclerView rv = findViewById(R.id.rvSchedule);
+        
+        GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (Math.abs(velocityX) > Math.abs(velocityY)) {
+                    if (velocityX < -500) { // Swipe Left -> Next Week
+                        nextWeek();
+                        return true;
+                    } else if (velocityX > 500) { // Swipe Right -> Prev Week
+                        prevWeek();
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
+
+        rv.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                gestureDetector.onTouchEvent(e);
+                return false;
+            }
+            @Override
+            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {}
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
+        });
     }
 
     @Override
@@ -53,9 +123,7 @@ public class ScheduleActivity extends AppCompatActivity {
         requestAdapter = new SwapRequestAdapter(myIncomingRequests, new SwapRequestAdapter.OnSwapRequestListener() {
             @Override
             public void onAccept(SwapRequest request) {
-                // GENOMFÖR BYTET I DATABASEN
                 MockDatabase.getInstance().transferShift(request.shift.id, request.receiverName);
-                
                 Toast.makeText(ScheduleActivity.this, "Passet är nu ditt!", Toast.LENGTH_LONG).show();
                 request.status = "ACCEPTED";
                 refreshData();
@@ -84,7 +152,6 @@ public class ScheduleActivity extends AppCompatActivity {
     }
 
     private void refreshData() {
-        // Uppdatera inkommande förfrågningar
         myIncomingRequests.clear();
         for (SwapRequest r : SwapRequest.allRequests) {
             if (r.receiverName.equalsIgnoreCase(userEmail) && "PENDING".equals(r.status)) {
@@ -92,8 +159,8 @@ public class ScheduleActivity extends AppCompatActivity {
             }
         }
 
-        // Uppdatera schemat från MockDatabase
-        List<Shift> myShifts = MockDatabase.getInstance().getShiftsFor(userEmail);
+        LocalDate currentSunday = currentMonday.plusDays(6);
+        List<Shift> filteredShifts = MockDatabase.getInstance().getShiftsFor(userEmail, currentMonday, currentSunday);
         
         TextView tvHeader = findViewById(R.id.tvRequestsHeader);
         RecyclerView rvReq = findViewById(R.id.rvSwapRequests);
@@ -106,10 +173,9 @@ public class ScheduleActivity extends AppCompatActivity {
             rvReq.setVisibility(View.VISIBLE);
         }
 
-        // Uppdatera adaptrarna
         if (requestAdapter != null) requestAdapter.notifyDataSetChanged();
         if (shiftAdapter != null) {
-            shiftAdapter.setShifts(myShifts);
+            shiftAdapter.setShifts(filteredShifts);
         }
     }
 }
