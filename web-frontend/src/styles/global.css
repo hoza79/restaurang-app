@@ -1,0 +1,122 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    /* Mork tema */
+    --charcoal: #3D352E;
+    --dark-slate: #4A4038;
+    --medium-gray: #5C524A;
+    --warm-gray: #9A8E82;
+    --nav-bg: #2A2320;
+    --gold: #C9A84C;
+    --gold-dim: rgba(201, 168, 76, 0.7);
+    --gold-glow: rgba(201, 168, 76, 0.15);
+    --cream: #F0ECE2;
+    --light-section: #EDEAE4;
+    --off-white: #FAF8F4;
+    --text-light: #EBE5DA;
+    --text-muted: #A09788;
+    --text-on-light: #3A332C;
+    --text-muted-on-light: #6E655C;
+    --gold-on-light: #8E7428;
+
+    /* Admin */
+    --bg: #EDE9E0;
+    --bg-alt: #E5E0D6;
+    --bg-card: #F5F2EC;
+    --bg-sidebar: #3D352E;
+    --bg-sidebar-hover: #4A4038;
+    --text-dark: #2E2A24;
+    --text-body: #3A352E;
+    --text-sidebar: #D4CEC4;
+    --text-sidebar-muted: #9A8E82;
+    --border: rgba(46, 42, 36, 0.1);
+    --border-gold: rgba(142, 116, 40, 0.25);
+    --danger: #A63D2F;
+    --danger-bg: rgba(166, 61, 47, 0.08);
+    --success: #4A7C3F;
+    --success-bg: rgba(74, 124, 63, 0.08);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+}
+
+/* Gemensamt */
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.section-label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 200;
+    font-size: 0.7rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+}
+
+.section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+    color: var(--cream);
+}
+
+.section-title em {
+    font-style: italic;
+    color: var(--gold);
+}
+
+.gold-line {
+    width: 60px;
+    height: 1px;
+    background: rgba(201, 168, 76, 0.4);
+    margin: 1.5rem 0;
+}
+
+.section-intro {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    max-width: 550px;
+    margin-bottom: 3.5rem;
+    line-height: 1.8;
+}
+
+/* Knappar */
+.btn {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-gold { background: var(--gold); color: #fff; }
+.btn-gold:hover { background: var(--gold); opacity: 0.85; }
+
+.btn-outline {
+    background: transparent;
+    color: var(--gold-on-light);
+    border: 1px solid var(--border-gold);
+}
+.btn-outline:hover { background: rgba(142, 116, 40, 0.15); }
+
+.btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid rgba(166, 61, 47, 0.25);
+}
+.btn-danger:hover { background: var(--danger-bg); }
+
+.btn-sm { font-size: 0.65rem; padding: 0.4rem 0.8rem; }
