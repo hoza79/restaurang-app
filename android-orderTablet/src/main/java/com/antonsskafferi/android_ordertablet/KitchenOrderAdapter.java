@@ -116,15 +116,9 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
             h.llDishes.addView(section);
         }
 
-        // Overlay fångar alla tryck – markerar nästa kurs som klar
-        final int currentPos = pos;
-        h.touchOverlay.setOnClickListener(v -> {
-            KitchenOrder.Course next = order.currentCourse();
-            if (next != null) {
-                next.doneAt = System.currentTimeMillis();
-                listener.onCourseDone(currentPos, order.isFullyDone());
-            }
-        });
+        // Overlay is no longer responsible for completion; KitchenActivity handles "tap anywhere"
+        h.touchOverlay.setOnClickListener(null);
+        h.touchOverlay.setClickable(false);
     }
 
     @Override public int getItemCount() { return orders.size(); }

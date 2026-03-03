@@ -4,25 +4,34 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.*;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import java.text.SimpleDateFormat;
-import android.util.Log;
+
 import com.antonsskafferi.android_ordertablet.net.ApiClient;
 import com.antonsskafferi.android_ordertablet.net.KitchenBatchDto;
 import com.antonsskafferi.android_ordertablet.net.KitchenItemDto;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import java.util.Date;
+import java.util.TimeZone;
+
 public class KitchenActivity extends AppCompatActivity {
 
     private static final String TAG = "KitchenActivity";
+
     private KitchenOrderAdapter adapter;
     private List<KitchenOrder> activeOrders = new ArrayList<>();
     private TextView tvClock, tvCount, tvEmpty;
@@ -30,12 +39,14 @@ public class KitchenActivity extends AppCompatActivity {
     private final Handler clockHandler = new Handler();
     private final Handler pollHandler  = new Handler();
 
+    // Minimal guard to avoid spamming PUT calls on repeated taps
+    private boolean completing = false;
+
     @Override
     protected void onCreate(Bundle s) {
         super.onCreate(s);
         setContentView(R.layout.activity_kitchen);
 
-        // ← BACK-knapp
         findViewById(R.id.btnKitchenBack).setOnClickListener(v -> finish());
 
         tvClock = findViewById(R.id.tvClock);
@@ -45,38 +56,64 @@ public class KitchenActivity extends AppCompatActivity {
         rv.setLayoutManager(new LinearLayoutManager(this));
 
         adapter = new KitchenOrderAdapter(activeOrders, (pos, fullyDone) -> {
-            if (pos < 0 || pos >= activeOrders.size()) return;
-
-            KitchenOrder order = activeOrders.get(pos);
-            int batchId = order.orderId; // we stored batchId here
-
-            ApiClient.api().completeKitchenBatch(batchId).enqueue(new Callback<Map<String, Object>>() {
-                @Override
-                public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> resp) {
-                    if (resp.isSuccessful()) {
-                        loadOrders();
-                    } else {
-                        Toast.makeText(KitchenActivity.this,
-                                "Kunde inte markera klar (" + resp.code() + ")", Toast.LENGTH_SHORT).show();
-                        adapter.notifyItemChanged(pos);
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<Map<String, Object>> call, Throwable t) {
-                    Toast.makeText(KitchenActivity.this,
-                            "Ingen kontakt med servern", Toast.LENGTH_SHORT).show();
-                    adapter.notifyItemChanged(pos);
-                }
-            });
+            // Intentionally unused: completion is handled by "tap anywhere"
         });
         rv.setAdapter(adapter);
+
+        // Tryck var som helst på skärmen = ta bort (markera klar) FÖRSTA batchen
+        rv.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull android.view.MotionEvent e) {
+                if (e.getAction() == android.view.MotionEvent.ACTION_UP && !activeOrders.isEmpty()) {
+                    if (!completing) completeFirstBatch();
+                    return true; // always consume
+                }
+                return false;
+            }
+        });
 
         startClock();
         startPolling();
         loadOrders();
     }
 
+    /** Backend: mark a batch as complete (SERVED) and reload list */
+    private void completeFirstBatch() {
+        if (activeOrders.isEmpty()) return;
+        completeBatch(activeOrders.get(0).orderId); // orderId holds batchId
+    }
+
+    private void completeBatch(int batchId) {
+        if (completing) return;
+        completing = true;
+
+        ApiClient.api().completeKitchenBatch(batchId).enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> resp) {
+                completing = false;
+                if (resp.isSuccessful()) {
+                    loadOrders();
+                } else {
+                    Toast.makeText(KitchenActivity.this,
+                            "Kunde inte markera klar (" + resp.code() + ")",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                completing = false;
+                Toast.makeText(KitchenActivity.this,
+                        "Ingen kontakt med servern", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /**
+     * Hämtar ordrar från backend (/kitchen/batches) och sorterar på aktiv kurs:
+     * slot 0 (Dryck/Bar) → 1 (Förrätt) → 2 (Varmrätt) → 3 (Efterrätt).
+     * Inom samma slot hamnar äldst överst (createdAt ASC).
+     */
     private void loadOrders() {
         ApiClient.api().getKitchenBatches().enqueue(new Callback<List<KitchenBatchDto>>() {
             @Override
@@ -92,14 +129,14 @@ public class KitchenActivity extends AppCompatActivity {
                 for (KitchenBatchDto b : resp.body()) {
                     if (b == null || b.batchId == null || b.tableNumber == null) continue;
 
-                    // ✅ filter out bar batches
+                    // Filter out bar batches from kitchen view
                     if (b.batchType != null && b.batchType.trim().equalsIgnoreCase("DRINK")) {
                         continue;
                     }
 
+                    // Reuse KitchenOrder model: orderId stores batchId
                     KitchenOrder o = new KitchenOrder(b.batchId, b.tableNumber);
 
-                    // Convert items -> dish strings your adapter expects
                     List<String> dishes = new ArrayList<>();
                     if (b.items != null) {
                         for (KitchenItemDto it : b.items) {
@@ -115,13 +152,14 @@ public class KitchenActivity extends AppCompatActivity {
 
                     int slot = mapBatchTypeToSlot(b.batchType);
 
-                    // If you later parse createdAt, set createdAt properly; for now System.currentTimeMillis() is ok
-                    o.addCourse(new KitchenOrder.Course(slot, dishes, System.currentTimeMillis()));
-
+                    // Minimal: use 'createdAt' from database for sorting
+                    long createdAtMs = parseCreatedAtMillis(b.createdAt);
+                    o.addCourse(new KitchenOrder.Course(slot, dishes, createdAtMs));
                     fresh.add(o);
                 }
 
-                // sort: slot order then oldest first
+                completing = false;
+
                 fresh.sort((a, b) -> {
                     KitchenOrder.Course ca = a.currentCourse();
                     KitchenOrder.Course cb = b.currentCourse();
@@ -147,9 +185,45 @@ public class KitchenActivity extends AppCompatActivity {
         });
     }
 
+    private long parseCreatedAtMillis(String createdAt) {
+        if (createdAt == null) return System.currentTimeMillis();
+        String s = createdAt.trim();
+        if (s.isEmpty()) return System.currentTimeMillis();
+
+        // Backend may send fractional seconds: 2026-03-03T12:34:56.123456
+        boolean hasFraction = s.contains(".");
+        if (hasFraction) {
+            String[] parts = s.split("\\.", 2);
+            String base = parts[0];
+            String frac = parts.length > 1 ? parts[1] : "";
+
+            // remove any timezone part if it exists (unlikely for LocalDateTime, but safe)
+            frac = frac.replaceAll("[^0-9].*$", "");
+
+            // keep only first 3 digits for SSS
+            if (frac.length() > 3) frac = frac.substring(0, 3);
+            while (frac.length() < 3) frac = frac + "0";
+
+            s = base + "." + frac;
+        }
+
+        try {
+            SimpleDateFormat fmt = new SimpleDateFormat(
+                    hasFraction ? "yyyy-MM-dd'T'HH:mm:ss.SSS" : "yyyy-MM-dd'T'HH:mm:ss",
+                    Locale.US
+            );
+            fmt.setLenient(false);
+            fmt.setTimeZone(TimeZone.getTimeZone("Europe/Stockholm"));
+            Date d = fmt.parse(s);
+            return d != null ? d.getTime() : System.currentTimeMillis();
+        } catch (Exception ignored) {
+            return System.currentTimeMillis();
+        }
+    }
+
     private int mapBatchTypeToSlot(String batchType) {
         if (batchType == null) return 2;
-        switch (batchType.trim().toUpperCase(java.util.Locale.ROOT)) {
+        switch (batchType.trim().toUpperCase(Locale.ROOT)) {
             case "DRINK":       return 0;
             case "APPETIZER":   return 1;
             case "MAIN_COURSE": return 2;
@@ -175,7 +249,7 @@ public class KitchenActivity extends AppCompatActivity {
         });
     }
 
-    /** Pollar var 5:e sekund (ersätts med WebSocket när backend är klar). */
+    /** Pollar var 5:e sekund. */
     private void startPolling() {
         pollHandler.postDelayed(new Runnable() {
             public void run() {
@@ -188,7 +262,7 @@ public class KitchenActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadOrders(); // ladda om direkt när vi kommer hit
+        loadOrders();
     }
 
     @Override

@@ -5,5 +5,5 @@ public class MenuCarteItemDto {
     public Integer menuItemId;
     public String description;
     public Double price;
-    public Boolean available;
+    public Boolean options;
 }
