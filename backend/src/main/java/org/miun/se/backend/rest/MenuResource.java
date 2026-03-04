@@ -14,7 +14,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.miun.se.backend.DTO.MenuDto;
 import org.miun.se.backend.DTO.MenuCarteItemDto;
 import org.miun.se.backend.DTO.CarteAddDto;
-import org.miun.se.backend.model.enums.MenuCartCategory;
+import org.miun.se.backend.rest.enums.MenuCartCategory;
 import org.miun.se.backend.model.MenuItem;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +51,7 @@ public class MenuResource{
 
         for(MenuItem item : items){
             MenuCarteItemDto itemDto = new MenuCarteItemDto(item.getName(), item.getMenuItemId(),
-                    item.getDescription(), item.getPrice(), item.getAvailable());
+                    item.getDescription(), item.getPrice(), item.getOptions());
 
             switch (item.getCategory().getCategoryName()){
                 case "Appetizers":
@@ -93,8 +93,8 @@ public class MenuResource{
 
         MenuItem item = new MenuItem(menu, carteDto.name(),
                 carteDto.description(), carteDto.price());
-        if(carteDto.available()){
-            item.setAvailable(carteDto.available());
+        if(carteDto.options()){
+            item.setOptions(carteDto.options());
         }
         em.persist(item);
         return Response.ok().build();
@@ -103,7 +103,7 @@ public class MenuResource{
     @DELETE
     @Path("/{itemId}")
     @Transactional
-    public Response deletCarteMeal(@PathParam("itemId") Integer itemId){
+    public Response deleteCarteMeal(@PathParam("itemId") Integer itemId){
         MenuItem item;
         try {
             item = em.createQuery(
@@ -116,6 +116,27 @@ public class MenuResource{
         }
 
         em.remove(item);
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("/{itemId}")
+    @Transactional
+    public Response editMeal(@PathParam("itemId") Integer itemId, MenuCarteItemDto mealDto){
+        MenuItem item;
+        try {
+            item = em.createQuery(
+                    "SELECT item FROM MenuItem item WHERE item.menuItemId = :id", MenuItem.class)
+                    .setParameter("id", itemId).getSingleResult();
+        } catch (Exception e) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        item.setName(mealDto.name());
+        item.setDescription(mealDto.description());
+        item.setPrice(mealDto.price());
+        item.setOptions(mealDto.options());
+
         return Response.ok().build();
     }
 }

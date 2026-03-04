@@ -2,6 +2,7 @@ package org.miun.se.backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import jakarta.json.bind.annotation.JsonbTransient;
 
 @Entity
 @Table(name = "order_item")
@@ -16,9 +17,11 @@ public class OrderItem {
     @JoinColumn(name = "menu_item_id", nullable = false)
     private MenuItem menuItem;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "order_batch_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "batch_id", nullable = false)
+    @JsonbTransient
     private OrderBatch orderBatch;
+
 
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
