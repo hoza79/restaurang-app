@@ -77,12 +77,12 @@ public class DishDetailActivity extends AppCompatActivity {
         etComment.setHintTextColor(GREY);
 
         findViewById(R.id.btnAddToOrder).setOnClickListener(v -> {
-            OrderItem item = new OrderItem(dish.name, dish.price, dish.category, defaultSlot);
+            // ← FIX: 5-args konstruktor med defaultSlot
+            OrderItem item = new OrderItem(dish.name, dish.price, dish.category, defaultSlot, dish.id);
 
             if (dish.hasCookingOptions) {
                 int selId = rg.getCheckedRadioButtonId();
-                if (selId != -1)
-                    item.cooking = ((RadioButton) rg.findViewById(selId)).getText().toString();
+                if (selId != -1) item.cooking = ((RadioButton) rg.findViewById(selId)).getText().toString();
             }
 
             List<String> chosen = new ArrayList<>();

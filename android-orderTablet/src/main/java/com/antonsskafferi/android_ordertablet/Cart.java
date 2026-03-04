@@ -15,8 +15,11 @@ public class Cart {
     // ── Session-klass ──────────────────────────────────────────────
     public static class CartSession {
         public final int tableNumber;
+        // NEW: DB primary key for DiningTable
+        public Integer tableId;
         public final List<OrderItem> items = new ArrayList<>();
         public boolean paid = false;
+        public Integer orderId; // DB orderId from /api/orders
 
         CartSession(int table) { this.tableNumber = table; }
 
@@ -80,10 +83,23 @@ public class Cart {
 
     /** Öppnar (eller återhämtar) en session för ett bord. */
     public static CartSession openTable(int tableNumber) {
+        return openTable(tableNumber, null);
+    }
+
+    public static CartSession openTable(int tableNumber, Integer tableId) {
         activeTable = tableNumber;
         if (!sessions.containsKey(tableNumber))
             sessions.put(tableNumber, new CartSession(tableNumber));
-        return sessions.get(tableNumber);
+
+        CartSession s = sessions.get(tableNumber);
+        if (tableId != null) s.tableId = tableId; // keep the known id
+        return s;
+    }
+
+    /** If you fetched tableId later, call this after openTable(). */
+    public static void setActiveTableId(Integer tableId) {
+        CartSession s = current();
+        if (s.tableNumber >= 0) s.tableId = tableId;
     }
 
     /** Hämtar aktiv session (kraschar aldrig – skapar om null). */
@@ -94,6 +110,11 @@ public class Cart {
     }
 
     public static int getActiveTable() { return activeTable; }
+
+    public static Integer getActiveTableId() {
+        CartSession s = current();
+        return s.tableId;
+    }
 
     /** Markera bord som betalt – stänger sessionen. */
     public static void closeTable(int tableNumber) {

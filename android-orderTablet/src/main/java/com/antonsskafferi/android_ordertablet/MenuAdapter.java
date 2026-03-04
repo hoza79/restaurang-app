@@ -2,7 +2,6 @@ package com.antonsskafferi.android_ordertablet;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.graphics.Color;
 import android.view.*;
 import android.widget.*;
 import androidx.annotation.NonNull;
@@ -11,15 +10,13 @@ import java.util.List;
 
 public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.VH> {
 
-    private static final String[] SLOT_LABELS = {"Dryck", "Förrätt", "Varmrätt", "Efterrätt"};
-    private static final int BG      = 0xFF121212;
     private static final int SURFACE = 0xFF1E1E1E;
     private static final int GOLD    = 0xFFC9A961;
     private static final int WHITE   = 0xFFEEEEEE;
     private static final int GREY    = 0xFF888888;
 
     private final List<MenuItem> items;
-    private final int defaultSlot;
+    private final int defaultSlot; // 0=Dryck 1=Förrätt 2=Varmrätt 3=Efterrätt
 
     public MenuAdapter(List<MenuItem> items, int defaultSlot) {
         this.items = items;
@@ -52,10 +49,14 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.VH> {
 
     /** Tryck på rätten: popup om tillagningsval finns, annars lägg till direkt */
     private void handleTap(Context ctx, MenuItem m) {
-        if (m.hasCookingOptions) {
+        boolean hasExtras = m.hasCookingOptions
+                || (m.sides != null && !m.sides.isEmpty())
+                || (m.sauces != null && !m.sauces.isEmpty());
+
+        if (hasExtras) {
             showOptionsDialog(ctx, m);
         } else {
-            Cart.current().addItem(new OrderItem(m.name, m.price, m.category, defaultSlot));
+            Cart.current().addItem(new OrderItem(m.name, m.price, m.category, defaultSlot, m.id));
             Toast.makeText(ctx, m.name + " tillagd", Toast.LENGTH_SHORT).show();
         }
     }
@@ -112,7 +113,7 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.VH> {
                 .setTitle(m.name)
                 .setView(layout)
                 .setPositiveButton("Lägg till", (d, w) -> {
-                    OrderItem item = new OrderItem(m.name, m.price, m.category, defaultSlot);
+                    OrderItem item = new OrderItem(m.name, m.price, m.category, defaultSlot, m.id);
 
                     if (m.hasCookingOptions) {
                         int selId = rg.getCheckedRadioButtonId();

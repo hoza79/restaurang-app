@@ -10,6 +10,12 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import android.util.Log;
+import com.antonsskafferi.android_ordertablet.net.ApiClient;
+import com.antonsskafferi.android_ordertablet.net.MenuDto;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class OrderActivity extends AppCompatActivity {
 
@@ -17,6 +23,7 @@ public class OrderActivity extends AppCompatActivity {
     private static final int[]    SLOTS = {0, 1, 2, 3};
 
     private TextView tvCartSummary, tvOrderCount;
+    private static final String TAG = "OrderActivity";
 
     @Override
     protected void onCreate(Bundle s) {
@@ -33,11 +40,9 @@ public class OrderActivity extends AppCompatActivity {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 
         ViewPager2 pager = findViewById(R.id.viewPager);
-        pager.setAdapter(new Adapter(this));
-        new TabLayoutMediator(
-                (TabLayout) findViewById(R.id.tabLayout), pager,
-                (tab, pos) -> tab.setText(CATS[pos])
-        ).attach();
+        TabLayout tabLayout = findViewById(R.id.tabLayout);
+
+        loadMenuThenSetupPager(pager, tabLayout);
 
         // Granska / Kundkorg
         findViewById(R.id.btnReviewOrder).setOnClickListener(v -> {
@@ -73,5 +78,45 @@ public class OrderActivity extends AppCompatActivity {
         @Override public Fragment createFragment(int pos) {
             return MenuCategoryFragment.newInstance(CATS[pos], SLOTS[pos]);
         }
+    }
+
+    private void loadMenuThenSetupPager(ViewPager2 pager, TabLayout tabLayout) {
+        // If already loaded once, don’t refetch every time
+        if (MenuData.hasApiMenu()) {
+            setupPager(pager, tabLayout);
+            return;
+        }
+
+        Toast.makeText(this, "Laddar meny...", Toast.LENGTH_SHORT).show();
+
+        ApiClient.api().getMenu().enqueue(new Callback<MenuDto>() {
+            @Override
+            public void onResponse(Call<MenuDto> call, Response<MenuDto> resp) {
+                if (resp.isSuccessful() && resp.body() != null) {
+                    MenuData.setFromApi(resp.body());
+                    Log.d(TAG, "Menu loaded from API: " + MenuData.getAll().size() + " items");
+                } else {
+                    Log.e(TAG, "Menu request failed: HTTP " + resp.code());
+                    Toast.makeText(OrderActivity.this,
+                            "Kunde inte hämta meny (" + resp.code() + ")", Toast.LENGTH_SHORT).show();
+                }
+                setupPager(pager, tabLayout);
+            }
+
+            @Override
+            public void onFailure(Call<MenuDto> call, Throwable t) {
+                Log.e(TAG, "Menu fetch failed", t);
+                Toast.makeText(OrderActivity.this,
+                        "Ingen kontakt med servern (meny)", Toast.LENGTH_SHORT).show();
+                setupPager(pager, tabLayout);
+            }
+        });
+    }
+
+    private void setupPager(ViewPager2 pager, TabLayout tabLayout) {
+        pager.setAdapter(new Adapter(this));
+        new TabLayoutMediator(tabLayout, pager,
+                (tab, pos) -> tab.setText(CATS[pos])
+        ).attach();
     }
 }

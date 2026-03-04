@@ -5,8 +5,16 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
+import android.util.Log;
+import com.antonsskafferi.android_ordertablet.net.ApiClient;
+import com.antonsskafferi.android_ordertablet.net.PayRequest;
+import java.util.Map;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PaymentActivity extends AppCompatActivity {
+    private static final String TAG = "PaymentActivity";
 
     private static final int BG      = 0xFF121212;
     private static final int SURFACE = 0xFF1E1E1E;
@@ -78,21 +86,59 @@ public class PaymentActivity extends AppCompatActivity {
     }
 
     private void confirmPayment(String method, int tableNum) {
-        // Frigör bord
-        KitchenDataStore.getInstance().removeOrder(tableNum);
-        Cart.closeTable(tableNum);
 
-        Toast.makeText(this,
-                "✓ " + method + " klar – Bord " + tableNum + " är ledigt!",
-                Toast.LENGTH_LONG).show();
+        Integer tableId = Cart.getActiveTableId();
+        if (tableId == null) {
+            Toast.makeText(this,
+                    "Saknar tableId från backend. Öppna bordet igen.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
-        // TODO: POST /api/orders/{id}/pay  { method, tableId }
+        // Optional: disable buttons here to prevent double-tap
+        Toast.makeText(this, "Skickar betalning...", Toast.LENGTH_SHORT).show();
 
-        // Gå tillbaka till bordsöversikten, rensa stack
-        Intent i = new Intent(this, TableSelectActivity.class);
-        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(i);
-        finish();
+        ApiClient.api().payOrder(new PayRequest(tableId, method)).enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> resp) {
+
+                if (resp.isSuccessful()) {
+                    // now do local cleanup
+                    Cart.closeTable(tableNum);
+
+                    Toast.makeText(PaymentActivity.this,
+                            "✓ " + method + " klar – Bord " + tableNum + " är ledigt!",
+                            Toast.LENGTH_LONG).show();
+
+                    Intent i = new Intent(PaymentActivity.this, TableSelectActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(i);
+                    finish();
+                    return;
+                }
+
+                // Not successful: show backend error
+                String msg = "Betalning nekad (" + resp.code() + ")";
+                try {
+                    if (resp.errorBody() != null) {
+                        msg = resp.errorBody().string();
+                    }
+                } catch (Exception ignored) {}
+
+                Log.e(TAG, "payOrder failed: HTTP " + resp.code() + " " + msg);
+
+                // Common case: 400 when kitchen still processing
+                Toast.makeText(PaymentActivity.this,
+                        "Kan inte betala än: " + msg,
+                        Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                Log.e(TAG, "payOrder network failure", t);
+                Toast.makeText(PaymentActivity.this,
+                        "Ingen kontakt med servern", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private Button payBtn(String label, int color) {

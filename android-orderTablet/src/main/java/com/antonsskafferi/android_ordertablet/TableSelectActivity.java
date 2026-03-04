@@ -10,13 +10,18 @@ import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import com.antonsskafferi.android_ordertablet.net.ApiClient;
+import com.antonsskafferi.android_ordertablet.net.DiningTableDto;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import android.util.Log;
 
 public class TableSelectActivity extends AppCompatActivity {
+    private final List<DiningTableDto> tables = new ArrayList<>();
+    private boolean loadingTables = false;
 
-    // TODO: ersätts av GET /api/tables när Retrofit kopplas
-    // true = bordet är reserverat/upptaget utan aktiv nota
-    private final boolean[] occupied = new boolean[10];
-
+    private static final String TAG = "TableSelectActivity";
     private final Handler clockHandler = new Handler();
     private TextView tvTime;
 
@@ -34,67 +39,168 @@ public class TableSelectActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        buildGrid();
+        refreshTables(); // fetch + then buildGrid()
+    }
+
+    private void refreshTables() {
+        if (loadingTables) return;
+        loadingTables = true;
+
+        ApiClient.api().getTables().enqueue(new Callback<List<DiningTableDto>>() {
+            @Override
+            public void onResponse(Call<List<DiningTableDto>> call, Response<List<DiningTableDto>> resp) {
+                loadingTables = false;
+
+                if (!resp.isSuccessful() || resp.body() == null) {
+                    Toast.makeText(TableSelectActivity.this,
+                            "Kunde inte hämta bord (" + resp.code() + ")", Toast.LENGTH_SHORT).show();
+                    buildGrid(); // builds using whatever is currently in `tables`
+                    return;
+                }
+
+                tables.clear();
+                tables.addAll(resp.body());
+
+                // Sort by tableNumber (stable grid)
+                tables.sort((a, b) -> {
+                    int an = a.tableNumber != null ? a.tableNumber : 0;
+                    int bn = b.tableNumber != null ? b.tableNumber : 0;
+                    return Integer.compare(an, bn);
+                });
+
+                buildGrid();
+            }
+
+            @Override
+            public void onFailure(Call<List<DiningTableDto>> call, Throwable t) {
+                loadingTables = false;
+                Log.e(TAG, "Failed to fetch tables: " + t.getMessage(), t);
+                Toast.makeText(TableSelectActivity.this,
+                        "Ingen kontakt med servern", Toast.LENGTH_SHORT).show();
+                buildGrid();
+            }
+        });
     }
 
     private void buildGrid() {
         GridLayout grid = findViewById(R.id.tableGrid);
         grid.removeAllViews();
 
-        for (int i = 0; i < 10; i++) {
-            final int num = i + 1;
-            boolean occ     = occupied[i];
-            boolean hasNota = Cart.hasOpenSession(num);
+        if (tables.isEmpty()) {
+            // Fallback: show 10 “unknown status” tables if API failed
+            for (int i = 0; i < 10; i++) {
+                int num = i + 1;
+                addTableCard(grid, num, null, "UNKNOWN");
+            }
+        } else {
+            for (DiningTableDto t : tables) {
+                if (t.tableNumber == null) continue;
+                addTableCard(grid, t.tableNumber, t.tableId, t.tableStatus);
+            }
+        }
+    }
 
-            LinearLayout card = new LinearLayout(this);
-            card.setOrientation(LinearLayout.VERTICAL);
-            card.setGravity(Gravity.CENTER);
+    private void addTableCard(GridLayout grid, int tableNumber, Integer tableId, String tableStatus) {
 
-            int bgColor = hasNota
-                    ? Color.parseColor("#3D2E00")
-                    : occ
-                    ? Color.parseColor("#2A1A0E")
-                    : Color.parseColor("#252525");
-            card.setBackgroundColor(bgColor);
+        boolean hasNota = Cart.hasOpenSession(tableNumber);
 
-            GridLayout.LayoutParams p = new GridLayout.LayoutParams();
-            p.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-            p.rowSpec    = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-            p.setMargins(8, 8, 8, 8);
-            p.width = 0;
-            p.height = dp(100);
-            card.setLayoutParams(p);
+        String st = (tableStatus == null) ? "UNKNOWN" : tableStatus.trim().toUpperCase(Locale.ROOT);
+        boolean isUnknown   = st.isEmpty() || st.equals("UNKNOWN") || st.equals("NULL");
+        boolean isAvailable = st.equals("AVAILABLE");
+        boolean isOccupied  = !isUnknown && !isAvailable;
 
-            TextView tvNum = new TextView(this);
-            tvNum.setText(String.valueOf(num));
-            tvNum.setTextSize(26);
-            tvNum.setTypeface(null, Typeface.BOLD);
-            tvNum.setTextColor(Color.parseColor("#EEEEEE"));
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER);
 
-            TextView tvSt = new TextView(this);
-            tvSt.setTextSize(11);
-            if (hasNota) {
-                tvSt.setText("Öppen nota");
-                tvSt.setTextColor(Color.parseColor("#C9A961"));
-            } else if (occ) {
-                tvSt.setText("Upptaget");
-                tvSt.setTextColor(Color.parseColor("#FF6B6B"));
-            } else {
-                tvSt.setText("Ledig");
-                tvSt.setTextColor(Color.parseColor("#4ECDC4"));
+        // Färg: guld-ton = öppen nota | orange-ton = upptaget | grå = ledig/okänd
+        int bgColor = hasNota
+                ? Color.parseColor("#3D2E00")
+                : isOccupied
+                ? Color.parseColor("#2A1A0E")
+                : Color.parseColor("#252525");
+
+        card.setBackgroundColor(bgColor);
+
+        GridLayout.LayoutParams p = new GridLayout.LayoutParams();
+        p.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        p.rowSpec    = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        p.setMargins(8, 8, 8, 8);
+        p.width = 0;
+        p.height = dp(100);
+        card.setLayoutParams(p);
+
+        TextView tvNum = new TextView(this);
+        tvNum.setText(String.valueOf(tableNumber));
+        tvNum.setTextSize(26);
+        tvNum.setTypeface(null, Typeface.BOLD);
+        tvNum.setTextColor(Color.parseColor("#EEEEEE"));
+
+        TextView tvSt = new TextView(this);
+        tvSt.setTextSize(11);
+
+        if (hasNota) {
+            tvSt.setText("Öppen nota");
+            tvSt.setTextColor(Color.parseColor("#C9A961"));
+        } else if (isUnknown) {
+            tvSt.setText("Okänd");
+            tvSt.setTextColor(Color.parseColor("#888888"));
+        } else if (isOccupied) {
+            tvSt.setText("Upptaget");
+            tvSt.setTextColor(Color.parseColor("#FF6B6B"));
+        } else {
+            tvSt.setText("Ledig");
+            tvSt.setTextColor(Color.parseColor("#4ECDC4"));
+        }
+
+        card.addView(tvNum);
+        card.addView(tvSt);
+
+        card.setClickable(true);
+        card.setFocusable(true);
+        card.setOnClickListener(v -> {
+            // If we couldn't fetch tableId, we can't create backend order
+            if (tableId == null) {
+                Toast.makeText(this, "Saknar tableId från backend", Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            card.addView(tvNum);
-            card.addView(tvSt);
-            card.setClickable(true);
-            card.setFocusable(true);
-            card.setOnClickListener(v -> {
-                Cart.openTable(num);
-                startActivity(new Intent(this, OrderActivity.class));
-            });
+            Cart.CartSession s = Cart.openTable(tableNumber, tableId);
 
-            grid.addView(card);
-        }
+            // Already created order for this session
+            if (s.orderId != null) {
+                startActivity(new Intent(this, OrderActivity.class));
+                return;
+            }
+
+            final int EMPLOYEE_ID = 2; // fixed WAITER (typical seed id)
+
+            ApiClient.api().createOrder(new com.antonsskafferi.android_ordertablet.net.CreateOrderRequest(EMPLOYEE_ID, tableId))
+                    .enqueue(new retrofit2.Callback<java.util.Map<String, Object>>() {
+                        @Override
+                        public void onResponse(retrofit2.Call<java.util.Map<String, Object>> call,
+                                               retrofit2.Response<java.util.Map<String, Object>> resp) {
+                            if (!resp.isSuccessful() || resp.body() == null) {
+                                Toast.makeText(TableSelectActivity.this,
+                                        "Kunde inte skapa order (" + resp.code() + ")", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            Object idObj = resp.body().get("orderId");
+                            if (idObj instanceof Number) {
+                                s.orderId = ((Number) idObj).intValue();
+                            }
+                            startActivity(new Intent(TableSelectActivity.this, OrderActivity.class));
+                        }
+
+                        @Override
+                        public void onFailure(retrofit2.Call<java.util.Map<String, Object>> call, Throwable t) {
+                            Toast.makeText(TableSelectActivity.this,
+                                    "Ingen kontakt med servern (order)", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        });
+
+        grid.addView(card);
     }
 
     private void startClock() {

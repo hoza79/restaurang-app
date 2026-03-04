@@ -30,6 +30,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import org.miun.se.backend.DTO.CreateBatchRequest;
+import org.miun.se.backend.DTO.CreateBatchItemRequest;
+import org.miun.se.backend.model.MenuItem;
+import org.miun.se.backend.model.OrderBatch;
+import org.miun.se.backend.model.enums.BatchType;
+
 @Path("/orders")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -169,5 +175,63 @@ public class OrderResource {
                 "message", "Payment completed",
                 "tableId", tableId
         )).build();
+    }
+
+    @POST
+    @Path("/{orderId}/batches")
+    @Transactional
+    public Response createBatch(@PathParam("orderId") Integer orderId, CreateBatchRequest req) {
+
+        if (req == null || req.items() == null || req.items().isEmpty() || req.batchType() == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "batchType and non-empty items are required"))
+                    .build();
+        }
+
+        CustomerOrder order = em.find(CustomerOrder.class, orderId);
+        if (order == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("error", "Order not found"))
+                    .build();
+        }
+
+        final BatchType batchType;
+        try {
+            batchType = BatchType.valueOf(req.batchType().trim().toUpperCase());
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "Invalid batchType: " + req.batchType()))
+                    .build();
+        }
+
+        OrderBatch batch = new OrderBatch(order, batchType);
+
+        for (CreateBatchItemRequest it : req.items()) {
+            if (it == null || it.menuItemId() == null || it.quantity() == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(Map.of("error", "Each item must have menuItemId and quantity"))
+                        .build();
+            }
+
+            MenuItem menuItem = em.find(MenuItem.class, it.menuItemId());
+            if (menuItem == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(Map.of("error", "MenuItem not found: " + it.menuItemId()))
+                        .build();
+            }
+
+            String notes = (it.notes() == null) ? null : it.notes().trim();
+            batch.addItem(menuItem, it.quantity(), notes);
+        }
+
+        em.persist(batch);
+        em.flush();
+
+        return Response.status(Response.Status.CREATED)
+                .entity(Map.of(
+                        "message", "Batch created",
+                        "batchId", batch.getBatchId()
+                ))
+                .build();
     }
 }
