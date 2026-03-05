@@ -4,7 +4,9 @@
 
     <persistence-unit name="restaurantPU" transaction-type="JTA">
         <jta-data-source>jdbc/restaurant_db</jta-data-source>
-
+        <class>org.miun.se.backend.model.Employee</class>
+        <class>org.miun.se.backend.model.Shift</class>
+        <class>org.miun.se.backend.model.SwapRequest</class>
         <properties>
             <property name="jakarta.persistence.schema-generation.database.action"
                 value="drop-and-create"/>

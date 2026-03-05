@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE resources PUBLIC
+        "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions//EN"
+        "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+<resources>
+    <jdbc-connection-pool
+            name="restaurant_db_pool"
+            res-type="javax.sql.DataSource"
+            datasource-classname="org.postgresql.ds.PGSimpleDataSource">
+        <property name="serverName" value="localhost"/>
+        <property name="portNumber" value="5432"/>
+        <property name="databaseName" value="restaurant_db"/>
+        <property name="user" value="restaurant_user"/>
+        <property name="password" value="1234"/>
+    </jdbc-connection-pool>
+
+    <jdbc-resource
+            pool-name="restaurant_db_pool"
+            jndi-name="jdbc/restaurant_db"/>
+</resources>
