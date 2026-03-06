@@ -80,7 +80,7 @@ public class SwapRequestAdapter extends RecyclerView.Adapter<SwapRequestAdapter.
             } catch (Exception ignored) {}
         }
 
-        // Show colleague name instead of ID
+        // Show colleague name
         String colleagueName = "Okänd kollega";
         EmployeeDto employee = employeeMap.get(req.senderId); // sender for incoming request
         if (employee != null) {
