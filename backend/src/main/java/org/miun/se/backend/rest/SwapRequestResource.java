@@ -81,16 +81,23 @@ public class SwapRequestResource {
     @Transactional
     public Response accept(@PathParam("swapId") Integer swapId) {
         SwapRequest swap = em.find(SwapRequest.class, swapId);
-        if (swap == null) return Response.status(404).entity("{\"error\":\"Not found\"}").build();
+        if (swap == null)
+            return Response.status(404).entity("{\"error\":\"Not found\"}").build();
+
         if (swap.getSwapStatus() != SwapStatus.PENDING)
             return Response.status(409).entity("{\"error\":\"Not pending\"}").build();
 
-        Shift shift = em.find(Shift.class, swap.getShift());
-        Employee newOwner = em.find(Employee.class, swap.getReceiverEmployee());
-        shift.setEmployee(newOwner);
+        // Get the actual shift and new owner
+        Shift shift = swap.getShift();
+        Employee newOwner = swap.getReceiverEmployee();
 
-        swap.setSwapStatus(SwapStatus.ACCEPTED);
-        return Response.ok(toDto(em.merge(swap))).build();
+        shift.setEmployee(newOwner);                         // transfer ownership
+        em.merge(shift);                                    // persist shift change
+
+        swap.setSwapStatus(SwapStatus.ACCEPTED);            // mark as accepted
+        em.merge(swap);                                     // persist swap status
+
+        return Response.ok(toDto(swap)).build();
     }
 
     // PUT /api/swap-requests/{swapId}/reject

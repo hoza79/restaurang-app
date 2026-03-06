@@ -24,9 +24,9 @@ public class LoadEmployees {
             return;
         }
 
-        em.persist(new Employee("Anna", "Svensson", EmployeeRole.MANAGER, "070-1234567", "anna.svensson@restaurang.se"));
-        em.persist(new Employee("Erik", "Lindberg", EmployeeRole.WAITER, "070-2345678", "erik.lindberg@restaurang.se"));
-        em.persist(new Employee("Sara", "Johansson", EmployeeRole.WAITER, "070-3456789", "sara.johansson@restaurang.se"));
-        em.persist(new Employee("Oskar", "Nilsson", EmployeeRole.WAITER, "070-4567890", "oskar.nilsson@restaurang.se"));
+        em.persist(new Employee("Anna", "Berg", EmployeeRole.WAITER, "070-1234567", "anna.berg@antons.se"));
+        em.persist(new Employee("Erik", "Sten", EmployeeRole.WAITER, "070-2345678", "erik.sten@antons.se"));
+        em.persist(new Employee("Sara", "Johansson", EmployeeRole.WAITER, "070-3456789", "sara.johansson@antons.se"));
+        em.persist(new Employee("Oskar", "Nilsson", EmployeeRole.WAITER, "070-4567890", "oskar.nilsson@antons.se"));
     }
 }

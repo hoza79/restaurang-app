@@ -10,6 +10,9 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Path("/shifts")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -29,6 +32,16 @@ public class ShiftResource {
         Shift shift = new Shift(employee, dto.startTime(), dto.endTime());
         em.persist(shift);
         return Response.status(Response.Status.CREATED).entity(toDto(shift)).build();
+    }
+
+    // GET /api/shifts
+    @GET
+    public List<ShiftDto> getAllShifts() {
+        return em.createQuery("SELECT s FROM Shift s", Shift.class)
+                .getResultList()
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     // GET /api/shifts/{shiftId}
