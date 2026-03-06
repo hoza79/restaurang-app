@@ -2,11 +2,6 @@ package com.antonsskafferi.android_ordertablet;
 
 import java.util.*;
 
-/**
- * Bron mellan POS och köket.
- * När ReviewOrderActivity skickar en kurs → addOrder() anropas här.
- * KitchenActivity läser getActiveOrders() och visar dem.
- */
 public class KitchenDataStore {
 
     private static KitchenDataStore instance;
@@ -20,19 +15,13 @@ public class KitchenDataStore {
         return instance;
     }
 
-    /**
-     * Anropas från ReviewOrderActivity när en kurs skickas.
-     * items = alla OrderItems för det aktuella slottet.
-     */
     public void addOrder(int tableNumber, int courseSlot, List<OrderItem> items) {
-        // Hitta befintlig order för bordet, eller skapa ny
         KitchenOrder existing = findByTable(tableNumber);
         if (existing == null) {
             existing = new KitchenOrder(nextOrderId++, tableNumber);
             orders.add(existing);
         }
 
-        // Bygg dish-strängar: "Entrecôte x2 · Medium · Pommes"
         List<String> dishes = new ArrayList<>();
         for (OrderItem item : items) {
             StringBuilder sb = new StringBuilder(item.dishName);
@@ -46,11 +35,11 @@ public class KitchenDataStore {
             dishes.add(sb.toString());
         }
 
-        existing.addCourse(new KitchenOrder.Course(courseSlot, dishes,
+        // batchId = 0 för lokala ordrar (används ej för API-completion)
+        existing.addCourse(new KitchenOrder.Course(0, courseSlot, dishes,
                 System.currentTimeMillis()));
     }
 
-    /** Alla ordrar med minst en kurs kvar. FCFS-sorterat. */
     public List<KitchenOrder> getActiveOrders() {
         List<KitchenOrder> active = new ArrayList<>();
         for (KitchenOrder o : orders)
