@@ -21,4 +21,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "restaurang-app"
 include ':android-orderTablet'
-include ':android-employeeSchedule'

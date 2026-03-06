@@ -32,4 +32,6 @@ public interface RestaurantApi {
             @Path("orderId") int orderId,
             @Body CreateBatchRequest body
     );
+    @retrofit2.http.GET("bookings")
+    retrofit2.Call<java.util.List<com.antonsskafferi.android_ordertablet.net.BookingDto>> getBookings();
 }

@@ -1,6 +1,7 @@
 package com.antonsskafferi.android_ordertablet;
 
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.view.*;
 import android.widget.*;
@@ -15,9 +16,11 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
 
     public interface OnCourseDone { void onCourseDone(int position, boolean orderFullyDone); }
 
-    private static final int DIVIDER = Color.parseColor("#333333");
-    private static final int WHITE   = Color.parseColor("#EEEEEE");
-    private static final int GOLD    = Color.parseColor("#C9A961");
+    private static final int DIVIDER     = Color.parseColor("#333333");
+    private static final int WHITE       = Color.parseColor("#EEEEEE");
+    private static final int WHITE_DIM   = Color.parseColor("#666666");
+    private static final int GOLD        = Color.parseColor("#C9A961");
+    private static final int GOLD_DIM    = Color.parseColor("#6B5A30");
     private static final SimpleDateFormat SDF = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
     private final List<KitchenOrder> orders;
@@ -43,10 +46,9 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
         h.tvCourseBadge.setVisibility(View.GONE);
         h.tvHint.setVisibility(View.GONE);
 
-        // Bygg kurssektioner
         boolean first = true;
         for (KitchenOrder.Course course : order.courses) {
-            if (course.isDone()) continue;
+            boolean done = course.isDone();
 
             if (!first) {
                 View sep = new View(h.itemView.getContext());
@@ -65,7 +67,7 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT));
 
-            // Header: kursnamn + tidsstämpel + elapsed
+            // Header: kursnamn + tidsstämpel + elapsed (döljs om klar)
             LinearLayout header = new LinearLayout(h.itemView.getContext());
             header.setOrientation(LinearLayout.HORIZONTAL);
             header.setGravity(Gravity.CENTER_VERTICAL);
@@ -77,46 +79,57 @@ public class KitchenOrderAdapter extends RecyclerView.Adapter<KitchenOrderAdapte
 
             TextView tvLabel = new TextView(h.itemView.getContext());
             tvLabel.setText(course.slotLabel().toUpperCase());
-            tvLabel.setTextColor(GOLD);
+            tvLabel.setTextColor(done ? GOLD_DIM : GOLD);
             tvLabel.setTextSize(11);
             tvLabel.setTypeface(null, Typeface.BOLD);
             tvLabel.setLayoutParams(new LinearLayout.LayoutParams(
                     0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            if (done) tvLabel.setPaintFlags(tvLabel.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
             header.addView(tvLabel);
 
-            TextView tvStamp = new TextView(h.itemView.getContext());
-            tvStamp.setText(SDF.format(new Date(course.createdAt)));
-            tvStamp.setTextColor(Color.parseColor("#AAAAAA"));
-            tvStamp.setTextSize(12);
-            tvStamp.setPadding(0, 0, dp(h, 8), 0);
-            header.addView(tvStamp);
+            if (!done) {
+                TextView tvStamp = new TextView(h.itemView.getContext());
+                tvStamp.setText(SDF.format(new Date(course.createdAt)));
+                tvStamp.setTextColor(Color.parseColor("#AAAAAA"));
+                tvStamp.setTextSize(12);
+                tvStamp.setPadding(0, 0, dp(h, 8), 0);
+                header.addView(tvStamp);
 
-            long mins = course.elapsedMinutes();
-            TextView tvElapsed = new TextView(h.itemView.getContext());
-            tvElapsed.setText(mins + " min");
-            tvElapsed.setTextColor(Color.BLACK);
-            tvElapsed.setTextSize(12);
-            tvElapsed.setPadding(dp(h, 8), dp(h, 2), dp(h, 8), dp(h, 2));
-            if      (mins < 10) tvElapsed.setBackgroundColor(Color.parseColor("#4ECDC4"));
-            else if (mins < 20) tvElapsed.setBackgroundColor(Color.parseColor("#FFB347"));
-            else                tvElapsed.setBackgroundColor(Color.parseColor("#FF6B6B"));
-            header.addView(tvElapsed);
+                long mins = course.elapsedMinutes();
+                TextView tvElapsed = new TextView(h.itemView.getContext());
+                tvElapsed.setText(mins + " min");
+                tvElapsed.setTextColor(Color.BLACK);
+                tvElapsed.setTextSize(12);
+                tvElapsed.setPadding(dp(h, 8), dp(h, 2), dp(h, 8), dp(h, 2));
+                if      (mins < 10) tvElapsed.setBackgroundColor(Color.parseColor("#4ECDC4"));
+                else if (mins < 20) tvElapsed.setBackgroundColor(Color.parseColor("#FFB347"));
+                else                tvElapsed.setBackgroundColor(Color.parseColor("#FF6B6B"));
+                header.addView(tvElapsed);
+            } else {
+                // Visa "✓ Klar" badge istället för timer
+                TextView tvDone = new TextView(h.itemView.getContext());
+                tvDone.setText("✓ Klar");
+                tvDone.setTextColor(Color.parseColor("#4ECDC4"));
+                tvDone.setTextSize(12);
+                tvDone.setAlpha(0.5f);
+                header.addView(tvDone);
+            }
 
             section.addView(header);
 
             for (String dish : course.dishes) {
                 TextView tv = new TextView(h.itemView.getContext());
                 tv.setText("• " + dish);
-                tv.setTextColor(WHITE);
+                tv.setTextColor(done ? WHITE_DIM : WHITE);
                 tv.setTextSize(15);
                 tv.setPadding(dp(h, 4), dp(h, 3), 0, dp(h, 3));
+                if (done) tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                 section.addView(tv);
             }
 
             h.llDishes.addView(section);
         }
 
-        // Overlay is no longer responsible for completion; KitchenActivity handles "tap anywhere"
         h.touchOverlay.setOnClickListener(null);
         h.touchOverlay.setClickable(false);
     }
