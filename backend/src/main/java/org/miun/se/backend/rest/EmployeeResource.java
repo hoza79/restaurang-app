@@ -3,12 +3,12 @@ package org.miun.se.backend.rest;
 import org.miun.se.backend.DTO.EmployeeDto;
 import org.miun.se.backend.DTO.KitchenOrderDto;
 import org.miun.se.backend.DTO.ShiftDto;
-import org.miun.se.backend.model.CustomerOrder;
 import org.miun.se.backend.model.Employee;
 import org.miun.se.backend.model.Shift;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -22,6 +22,21 @@ public class EmployeeResource {
 
     @PersistenceContext
     private EntityManager em;
+
+    // POST /api/employees
+    @POST
+    @Transactional
+    public Response create(EmployeeDto dto) {
+        Employee employee = new Employee(
+                dto.firstName(),
+                dto.lastName(),
+                dto.role(),
+                dto.phoneNumber(),
+                dto.emailAddress()
+        );
+        em.persist(employee);
+        return Response.status(Response.Status.CREATED).entity(toDto(employee)).build();
+    }
 
     // GET /api/employees/login?email={email}
     @GET
@@ -39,7 +54,7 @@ public class EmployeeResource {
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity("{\"error\":\"No employee found\"}").build();
         }
-        return Response.ok(toDto(results.get(0))).build();
+        return Response.ok(toDto(results.getFirst())).build();
     }
 
     // GET /api/employees
@@ -60,6 +75,38 @@ public class EmployeeResource {
         if (e == null) return Response.status(Response.Status.NOT_FOUND)
                 .entity("{\"error\":\"Employee not found\"}").build();
         return Response.ok(toDto(e)).build();
+    }
+
+    // PUT /api/employees/{employeeId}
+    @PUT
+    @Path("/{employeeId}")
+    @Transactional
+    public Response update(@PathParam("employeeId") Integer id, EmployeeDto dto) {
+        Employee employee = em.find(Employee.class, id);
+        if (employee == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity("{\"error\":\"Employee not found\"}").build();
+        }
+        if (dto.firstName() != null) employee.setFirstName(dto.firstName());
+        if (dto.lastName() != null) employee.setLastName(dto.lastName());
+        if (dto.role() != null) employee.setRole(dto.role());
+        if (dto.phoneNumber() != null) employee.setPhoneNumber(dto.phoneNumber());
+        if (dto.emailAddress() != null) employee.setEmailAddress(dto.emailAddress());
+
+        em.merge(employee);
+        return Response.ok(toDto(employee)).build();
+    }
+
+    // DELETE /api/employees/{employeeId}
+    @DELETE
+    @Path("/{employeeId}")
+    @Transactional
+    public Response delete(@PathParam("employeeId") Integer id) {
+        Employee employee = em.find(Employee.class, id);
+        if (employee == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity("{\"error\":\"Employee not found\"}").build();
+        }
+        em.remove(employee);
+        return Response.noContent().build();
     }
 
     // GET /api/employees/{employeeId}/shifts
