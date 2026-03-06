@@ -6,29 +6,40 @@ import android.os.Bundle;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.antonsskafferi.staff.network.*;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ScheduleActivity extends AppCompatActivity {
 
-    private List<SwapRequest> myIncomingRequests = new ArrayList<>();
+    private final List<SwapRequestDto> incomingRequests = new ArrayList<>();
+    private final Map<Integer, ShiftDto> shiftMap = new HashMap<>();
+    private final Map<Integer, EmployeeDto> employeeMap = new HashMap<>();
+    private List<ShiftDto> allMyShifts = new ArrayList<>();
     private SwapRequestAdapter requestAdapter;
     private ShiftAdapter shiftAdapter;
-    private String userEmail;
 
-    // Veckoväljare variabler
+    private Integer userId;
     private LocalDate currentMonday;
-    private DateTimeFormatter rangeFormatter = DateTimeFormatter.ofPattern("d MMM", new Locale("sv", "SE"));
+    private final DateTimeFormatter rangeFormatter = DateTimeFormatter.ofPattern("d MMM", new Locale("sv", "SE"));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,39 +47,30 @@ public class ScheduleActivity extends AppCompatActivity {
         setContentView(R.layout.activity_schedule);
 
         SharedPreferences prefs = getSharedPreferences("StaffPrefs", MODE_PRIVATE);
-        userEmail = prefs.getString("loggedInUser", "anna.berg@antons.se");
+        userId = prefs.getInt("loggedInId", -1);
+        String userName = prefs.getString("loggedInName", "Anställd");
+
+        if (userId == -1) { finish(); return; }
 
         TextView tvWelcome = findViewById(R.id.tvWelcome);
-        tvWelcome.setText("Inloggad: " + userEmail);
+        String welcomeText = "Välkommen, " + userName;
+        tvWelcome.setText(welcomeText);
 
-        // Initiera veckoväljare (starta på nuvarande veckas måndag)
-        currentMonday = LocalDate.of(2023, 10, 30); // Demonstrator startar här
+        currentMonday = LocalDate.now().with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
         updateWeekUI();
 
-        findViewById(R.id.btnPrevWeek).setOnClickListener(v -> prevWeek());
-        findViewById(R.id.btnNextWeek).setOnClickListener(v -> nextWeek());
-
+        findViewById(R.id.btnPrevWeek).setOnClickListener(v -> { currentMonday = currentMonday.minusWeeks(1); updateWeekUI(); filterAndDisplayShifts(); });
+        findViewById(R.id.btnNextWeek).setOnClickListener(v -> { currentMonday = currentMonday.plusWeeks(1); updateWeekUI(); filterAndDisplayShifts(); });
+        
         findViewById(R.id.btnLogout).setOnClickListener(v -> {
-            prefs.edit().remove("loggedInUser").apply();
+            prefs.edit().clear().apply();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
 
-        setupRequestsList();
-        setupScheduleList();
-        setupSwiping();
-    }
-
-    private void nextWeek() {
-        currentMonday = currentMonday.plusWeeks(1);
-        updateWeekUI();
-        refreshData();
-    }
-
-    private void prevWeek() {
-        currentMonday = currentMonday.minusWeeks(1);
-        updateWeekUI();
-        refreshData();
+        fetchEmployees();
+        setupRecyclerViews();
+        setupSwipeNavigation();
     }
 
     private void updateWeekUI() {
@@ -78,36 +80,33 @@ public class ScheduleActivity extends AppCompatActivity {
         tvRange.setText(rangeText);
     }
 
-    private void setupSwiping() {
-        RecyclerView rv = findViewById(R.id.rvSchedule);
-        
-        GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                if (Math.abs(velocityX) > Math.abs(velocityY)) {
-                    if (velocityX < -500) { // Swipe Left -> Next Week
-                        nextWeek();
-                        return true;
-                    } else if (velocityX > 500) { // Swipe Right -> Prev Week
-                        prevWeek();
-                        return true;
-                    }
-                }
-                return false;
-            }
+    private void setupRecyclerViews() {
+        RecyclerView rvRequests = findViewById(R.id.rvSwapRequests);
+        rvRequests.setLayoutManager(new LinearLayoutManager(this));
+        requestAdapter = new SwapRequestAdapter(incomingRequests, shiftMap, employeeMap, new SwapRequestAdapter.OnSwapRequestListener() {
+            @Override public void onAccept(SwapRequestDto req) { respondToSwap(req, true); }
+            @Override public void onDeny(SwapRequestDto req) { respondToSwap(req, false); }
         });
+        rvRequests.setAdapter(requestAdapter);
 
-        rv.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
-            @Override
-            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                gestureDetector.onTouchEvent(e);
-                return false;
+        RecyclerView rvShifts = findViewById(R.id.rvSchedule);
+        rvShifts.setLayoutManager(new LinearLayoutManager(this));
+        shiftAdapter = new ShiftAdapter(new ArrayList<>(), new ShiftAdapter.OnShiftSwapListener() {
+            @Override public void onSwapClick(ShiftDto shift) {
+                Intent i = new Intent(ScheduleActivity.this, ShiftSwapActivity.class);
+                i.putExtra("selectedShiftId", shift.shiftId);
+                i.putExtra("shiftStart", shift.startTime);
+                i.putExtra("shiftEnd", shift.endTime);
+                startActivity(i);
             }
-            @Override
-            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {}
-            @Override
-            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
+            @Override public void onRetractClick(SwapRequestDto req) {
+                RetrofitClient.getApiService().deleteSwapRequest(req.swapId).enqueue(new Callback<>() {
+                    @Override public void onResponse(@NonNull Call<Void> c, @NonNull Response<Void> r) { refreshData(); }
+                    @Override public void onFailure(@NonNull Call<Void> c, @NonNull Throwable t) {}
+                });
+            }
         });
+        rvShifts.setAdapter(shiftAdapter);
     }
 
     @Override
@@ -116,66 +115,139 @@ public class ScheduleActivity extends AppCompatActivity {
         refreshData();
     }
 
-    private void setupRequestsList() {
-        RecyclerView rvRequests = findViewById(R.id.rvSwapRequests);
-        rvRequests.setLayoutManager(new LinearLayoutManager(this));
-
-        requestAdapter = new SwapRequestAdapter(myIncomingRequests, new SwapRequestAdapter.OnSwapRequestListener() {
-            @Override
-            public void onAccept(SwapRequest request) {
-                MockDatabase.getInstance().transferShift(request.shift.id, request.receiverName);
-                Toast.makeText(ScheduleActivity.this, "Passet är nu ditt!", Toast.LENGTH_LONG).show();
-                request.status = "ACCEPTED";
-                refreshData();
-            }
-
-            @Override
-            public void onDeny(SwapRequest request) {
-                Toast.makeText(ScheduleActivity.this, "Förfrågan nekad", Toast.LENGTH_SHORT).show();
-                request.status = "REJECTED";
-                refreshData();
-            }
-        });
-        rvRequests.setAdapter(requestAdapter);
-    }
-
-    private void setupScheduleList() {
-        RecyclerView rv = findViewById(R.id.rvSchedule);
-        rv.setLayoutManager(new LinearLayoutManager(this));
-
-        shiftAdapter = new ShiftAdapter(new ArrayList<>(), userEmail, shift -> {
-            Intent intent = new Intent(this, ShiftSwapActivity.class);
-            intent.putExtra("selectedShift", shift);
-            startActivity(intent);
-        });
-        rv.setAdapter(shiftAdapter);
-    }
-
     private void refreshData() {
-        myIncomingRequests.clear();
-        for (SwapRequest r : SwapRequest.allRequests) {
-            if (r.receiverName.equalsIgnoreCase(userEmail) && "PENDING".equals(r.status)) {
-                myIncomingRequests.add(r);
+        fetchAllShifts(); // Fetch all shifts first to populate shiftMap
+        fetchIncomingSwaps();
+        fetchOutgoingSwaps();
+        fetchMyShifts();
+    }
+
+    private void fetchAllShifts() {
+        RetrofitClient.getApiService().getAllShifts().enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ShiftDto>> call, @NonNull Response<List<ShiftDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    for (ShiftDto s : response.body()) {
+                        shiftMap.put(s.shiftId, s);
+                    }
+                    if (requestAdapter != null) requestAdapter.notifyDataSetChanged();
+                }
             }
-        }
+            @Override public void onFailure(@NonNull Call<List<ShiftDto>> call, @NonNull Throwable t) {}
+        });
+    }
 
-        LocalDate currentSunday = currentMonday.plusDays(6);
-        List<Shift> filteredShifts = MockDatabase.getInstance().getShiftsFor(userEmail, currentMonday, currentSunday);
-        
-        TextView tvHeader = findViewById(R.id.tvRequestsHeader);
-        RecyclerView rvReq = findViewById(R.id.rvSwapRequests);
-        
-        if (myIncomingRequests.isEmpty()) {
-            tvHeader.setVisibility(View.GONE);
-            rvReq.setVisibility(View.GONE);
-        } else {
-            tvHeader.setVisibility(View.VISIBLE);
-            rvReq.setVisibility(View.VISIBLE);
-        }
+    private void fetchIncomingSwaps() {
+        RetrofitClient.getApiService().getIncomingSwaps(userId).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<List<SwapRequestDto>> call, @NonNull Response<List<SwapRequestDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    incomingRequests.clear();
+                    for (SwapRequestDto req : response.body()) {
+                        if (req.swapStatus == SwapStatus.PENDING) {
+                            incomingRequests.add(req);
+                        }
+                    }
+                    requestAdapter.setRequests(incomingRequests);
+                    findViewById(R.id.tvRequestsHeader).setVisibility(incomingRequests.isEmpty() ? View.GONE : View.VISIBLE);
+                    findViewById(R.id.rvSwapRequests).setVisibility(incomingRequests.isEmpty() ? View.GONE : View.VISIBLE);
+                }
+            }
+            @Override public void onFailure(@NonNull Call<List<SwapRequestDto>> call, @NonNull Throwable t) {}
+        });
+    }
 
-        if (requestAdapter != null) requestAdapter.notifyDataSetChanged();
-        if (shiftAdapter != null) {
-            shiftAdapter.setShifts(filteredShifts);
+    private void fetchOutgoingSwaps() {
+        RetrofitClient.getApiService().getOutgoingSwaps(userId).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<List<SwapRequestDto>> call, @NonNull Response<List<SwapRequestDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    shiftAdapter.setOutgoingRequests(response.body());
+                }
+            }
+            @Override public void onFailure(@NonNull Call<List<SwapRequestDto>> call, @NonNull Throwable t) {}
+        });
+    }
+
+    private void fetchMyShifts() {
+        RetrofitClient.getApiService().getEmployeeShifts(userId).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ShiftDto>> call, @NonNull Response<List<ShiftDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    allMyShifts = response.body();
+                    filterAndDisplayShifts();
+                }
+            }
+            @Override public void onFailure(@NonNull Call<List<ShiftDto>> call, @NonNull Throwable t) {}
+        });
+    }
+
+    private void fetchEmployees() {
+        RetrofitClient.getApiService().getAllEmployees().enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<List<EmployeeDto>> call, @NonNull Response<List<EmployeeDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    employeeMap.clear();
+                    for (EmployeeDto e : response.body()) {
+                        employeeMap.put(e.employeeId, e);
+                    }
+                    if (requestAdapter != null) requestAdapter.notifyDataSetChanged();
+                }
+            }
+            @Override public void onFailure(@NonNull Call<List<EmployeeDto>> call, @NonNull Throwable t) {}
+        });
+    }
+
+    private void filterAndDisplayShifts() {
+        List<ShiftDto> filtered = new ArrayList<>();
+        LocalDate sunday = currentMonday.plusDays(6);
+        for (ShiftDto s : allMyShifts) {
+            try {
+                LocalDate shiftDate = LocalDateTime.parse(s.startTime).toLocalDate();
+                if (!shiftDate.isBefore(currentMonday) && !shiftDate.isAfter(sunday)) {
+                    filtered.add(s);
+                }
+            } catch (Exception e) { filtered.add(s); }
         }
+        filtered.sort((s1, s2) -> {
+            try { return LocalDateTime.parse(s1.startTime).compareTo(LocalDateTime.parse(s2.startTime)); }
+            catch (Exception e) { return 0; }
+        });
+        shiftAdapter.setShifts(filtered);
+    }
+
+    private void respondToSwap(SwapRequestDto request, boolean accept) {
+        Call<SwapRequestDto> call = accept ? RetrofitClient.getApiService().acceptSwap(request.swapId) : RetrofitClient.getApiService().rejectSwap(request.swapId);
+        call.enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<SwapRequestDto> call, @NonNull Response<SwapRequestDto> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(ScheduleActivity.this, accept ? "Byte accepterat!" : "Byte nekat.", Toast.LENGTH_SHORT).show();
+                    refreshData();
+                }
+            }
+            @Override public void onFailure(@NonNull Call<SwapRequestDto> call, @NonNull Throwable t) {}
+        });
+    }
+
+    private void setupSwipeNavigation() {
+        GestureDetector gd = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onFling(MotionEvent e1, @NonNull MotionEvent e2, float vX, float vY) {
+                if (Math.abs(vX) > Math.abs(vY)) {
+                    if (vX < -500) { currentMonday = currentMonday.plusWeeks(1); }
+                    else if (vX > 500) { currentMonday = currentMonday.minusWeeks(1); }
+                    else { return false; }
+                    updateWeekUI(); filterAndDisplayShifts(); return true;
+                }
+                return false;
+            }
+        });
+        RecyclerView rv = findViewById(R.id.rvSchedule);
+        rv.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            @Override public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) { gd.onTouchEvent(e); return false; }
+            @Override public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {}
+            @Override public void onRequestDisallowInterceptTouchEvent(boolean b) {}
+        });
     }
 }
