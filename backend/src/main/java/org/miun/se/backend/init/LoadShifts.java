@@ -13,6 +13,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Optional;
 
 @Singleton
 @Startup
@@ -24,45 +25,55 @@ public class LoadShifts {
 
     @PostConstruct
     public void init() {
-        Long existing = em.createQuery("SELECT COUNT(s) FROM Shift s", Long.class)
-                .getSingleResult();
-
-        if (existing != 0L) {
+        // Check if shifts already exist
+        if (em.createQuery("SELECT COUNT(s) FROM Shift s", Long.class).getSingleResult() > 0) {
             return;
         }
 
-        List<Employee> employees = em.createQuery("SELECT e FROM Employee e", Employee.class)
-                .getResultList();
+        // Get all employees
+        List<Employee> employees = em.createQuery("SELECT e FROM Employee e", Employee.class).getResultList();
 
-        LocalDate monday = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
+        // If no employees, do nothing
+        if (employees.isEmpty()) {
+            return;
+        }
 
-        // Monday shifts
-        em.persist(new Shift(employees.get(0), monday.atTime(8, 0), monday.atTime(16, 0)));
-        em.persist(new Shift(employees.get(1), monday.atTime(10, 0), monday.atTime(18, 0)));
-        em.persist(new Shift(employees.get(2), monday.atTime(12, 0), monday.atTime(20, 0)));
+        // Find Anna and Erik by their first names
+        Optional<Employee> annaOpt = employees.stream().filter(e -> "Anna".equals(e.getFirstName())).findFirst();
+        Optional<Employee> erikOpt = employees.stream().filter(e -> "Erik".equals(e.getFirstName())).findFirst();
 
-        // Tuesday shifts
-        LocalDate tuesday = monday.plusDays(1);
-        em.persist(new Shift(employees.get(1), tuesday.atTime(8, 0), tuesday.atTime(16, 0)));
-        em.persist(new Shift(employees.get(2), tuesday.atTime(10, 0), tuesday.atTime(18, 0)));
-        em.persist(new Shift(employees.get(3), tuesday.atTime(12, 0), tuesday.atTime(20, 0)));
+        if (annaOpt.isEmpty() || erikOpt.isEmpty()) {
+            System.err.println("Warning: Could not find both Anna and Erik. No shifts will be generated.");
+            return;
+        }
 
-        // Wednesday shifts
-        LocalDate wednesday = monday.plusDays(2);
-        em.persist(new Shift(employees.get(0), wednesday.atTime(8, 0), wednesday.atTime(16, 0)));
-        em.persist(new Shift(employees.get(3), wednesday.atTime(10, 0), wednesday.atTime(18, 0)));
-        em.persist(new Shift(employees.get(1), wednesday.atTime(12, 0), wednesday.atTime(20, 0)));
+        Employee anna = annaOpt.get();
+        Employee erik = erikOpt.get();
 
-        // Thursday shifts
-        LocalDate thursday = monday.plusDays(3);
-        em.persist(new Shift(employees.get(2), thursday.atTime(8, 0), thursday.atTime(16, 0)));
-        em.persist(new Shift(employees.get(0), thursday.atTime(10, 0), thursday.atTime(18, 0)));
-        em.persist(new Shift(employees.get(3), thursday.atTime(12, 0), thursday.atTime(20, 0)));
+        // Start from the next or same Monday
+        LocalDate startDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 
-        // Friday shifts
-        LocalDate friday = monday.plusDays(4);
-        em.persist(new Shift(employees.get(1), friday.atTime(8, 0), friday.atTime(16, 0)));
-        em.persist(new Shift(employees.get(2), friday.atTime(10, 0), friday.atTime(18, 0)));
-        em.persist(new Shift(employees.get(3), friday.atTime(12, 0), friday.atTime(20, 0)));
+        // Generate shifts for 2 weeks (14 days)
+        for (int i = 0; i < 14; i++) {
+            LocalDate currentDate = startDate.plusDays(i);
+
+            Employee dayShiftEmployee;
+            Employee eveningShiftEmployee;
+
+            // Alternate shifts each day: if the day index is even, Anna works day, otherwise Erik works day
+            if (i % 2 == 0) {
+                dayShiftEmployee = anna;
+                eveningShiftEmployee = erik;
+            } else {
+                dayShiftEmployee = erik;
+                eveningShiftEmployee = anna;
+            }
+
+            // Day shift: 08:00 - 16:00
+            em.persist(new Shift(dayShiftEmployee, currentDate.atTime(8, 0), currentDate.atTime(16, 0)));
+
+            // Evening shift: 16:00 - 23:00
+            em.persist(new Shift(eveningShiftEmployee, currentDate.atTime(16, 0), currentDate.atTime(23, 0)));
+        }
     }
 }
