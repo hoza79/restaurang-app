@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getCarteMenu, addCarteItem, deleteCarteItem } from '../../api/menuApi'
+import { getCarteMenu, addCarteItem, deleteCarteItem, updateCarteItem } from '../../api/menuApi'
 
 function CarteAdmin() {
   const [categories, setCategories] = useState([])
@@ -10,7 +10,7 @@ function CarteAdmin() {
   const [error, setError] = useState(null)
   // håller reda på vilken rad som redigeras just nu
   const [editingId, setEditingId] = useState(null)
-  const [editValues, setEditValues] = useState({ name: '', description: '', price: '' })
+  const [editValues, setEditValues] = useState({ name: '', description: '', price: '', options: false })
 
   useEffect(() => {
     fetchMenu()
@@ -35,7 +35,7 @@ function CarteAdmin() {
         name: newItem.name,
         description: newItem.description,
         price: newItem.price,
-        available: true,
+        options: newItem.beef,
       })
       setNewItem({ name: '', description: '', price: '', beef: false })
       setAddingTo(null)
@@ -57,25 +57,24 @@ function CarteAdmin() {
     }
   }
 
-  // öppna redigering (lokalt tills PUT-endpoint finns)
   const handleEditStart = (item) => {
     setEditingId(item.id)
-    setEditValues({ name: item.name, description: item.description, price: item.price })
+    setEditValues({ name: item.name, description: item.description, price: item.price, options: item.options ?? false })
   }
 
-  // spara redigering lokalt
-  const handleEditSave = (catIndex, itemId) => {
-    const updated = [...categories]
-    updated[catIndex] = {
-      ...updated[catIndex],
-      items: updated[catIndex].items.map(i =>
-        i.id === itemId
-          ? { ...i, name: editValues.name, description: editValues.description, price: parseInt(editValues.price) || 0 }
-          : i
-      )
+  // uppdaterar rätten via API
+  const handleEditSave = async (itemId) => {
+    setSaving(true)
+    setError(null)
+    try {
+      await updateCarteItem(itemId, editValues)
+      setEditingId(null)
+      fetchMenu()
+    } catch {
+      setError('Kunde inte uppdatera rätten')
+    } finally {
+      setSaving(false)
     }
-    setCategories(updated)
-    setEditingId(null)
   }
 
   if (loading) return <p>Laddar...</p>
@@ -94,7 +93,7 @@ function CarteAdmin() {
             <h3>{cat.category}</h3>
             <button
               className="btn btn-outline btn-sm"
-              onClick={() => { setAddingTo(addingTo === catIndex ? null : catIndex); setNewItem({ name: '', description: '', price: '' }) }}
+              onClick={() => { setAddingTo(addingTo === catIndex ? null : catIndex); setNewItem({ name: '', description: '', price: '', beef: false }) }}
             >
               + Lägg till
             </button>
@@ -137,7 +136,7 @@ function CarteAdmin() {
 
           <table className="admin-table">
             <thead>
-              <tr><th>Rätt</th><th>Beskrivning</th><th>Pris</th><th></th></tr>
+              <tr><th>Rätt</th><th>Beskrivning</th><th>Pris</th><th>Nötkött</th><th></th></tr>
             </thead>
             <tbody>
               {cat.items.map((item) => (
@@ -148,9 +147,20 @@ function CarteAdmin() {
                       <td><input type="text" value={editValues.name} onChange={(e) => setEditValues({ ...editValues, name: e.target.value })} /></td>
                       <td><input type="text" value={editValues.description} onChange={(e) => setEditValues({ ...editValues, description: e.target.value })} /></td>
                       <td><input type="text" value={editValues.price} onChange={(e) => setEditValues({ ...editValues, price: e.target.value })} style={{ width: '70px' }} /></td>
+                      <td>
+                        <button
+                          type="button"
+                          className={`btn btn-sm ${editValues.options ? 'btn-gold' : 'btn-outline'}`}
+                          onClick={() => setEditValues({ ...editValues, options: !editValues.options })}
+                        >
+                          {editValues.options ? 'Ja' : 'Nej'}
+                        </button>
+                      </td>
                       <td className="actions">
                         <button className="btn btn-outline btn-sm" onClick={() => setEditingId(null)}>Avbryt</button>
-                        <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(catIndex, item.id)}>Spara</button>
+                        <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(item.id)} disabled={saving}>
+                          {saving ? '...' : 'Spara'}
+                        </button>
                       </td>
                     </>
                   ) : (
@@ -159,6 +169,7 @@ function CarteAdmin() {
                       <td>{item.name}</td>
                       <td>{item.description}</td>
                       <td>{item.price} kr</td>
+                      <td>{item.options ? 'Ja' : 'Nej'}</td>
                       <td className="actions">
                         <button className="btn btn-outline btn-sm" onClick={() => handleEditStart(item)}>Redigera</button>
                         <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)}>Ta bort</button>

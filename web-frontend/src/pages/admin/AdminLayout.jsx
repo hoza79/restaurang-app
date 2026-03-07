@@ -11,6 +11,7 @@ function AdminLayout() {
     { to: '/admin/carte', icon: '\u{1F37D}', label: 'À la carte' },
     { to: '/admin/musik', icon: '\u{1F3B5}', label: 'Musik' },
     { to: '/admin/bokningar', icon: '\u{1F4C5}', label: 'Bokningar' },
+    { to: '/admin/schema', icon: '\u{1F4CB}', label: 'Schema' },
   ]
 
   const handleLogout = (e) => {

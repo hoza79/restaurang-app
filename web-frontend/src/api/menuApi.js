@@ -106,6 +106,7 @@ function parseCarteData(data) {
         name: i.name,
         description: i.description,
         price: i.price,
+        options: i.options ?? false,
       })),
     }))
     .filter(cat => cat.items.length > 0);
@@ -131,13 +132,13 @@ const CATEGORY_ENUM = {
 }
 
 // lägger till en rätt i en kategori, category = t.ex. "Förrätt"
-export async function addCarteItem(category, { name, description, price, available }) {
+export async function addCarteItem(category, { name, description, price, options }) {
   const enumVal = CATEGORY_ENUM[category]
   if (!enumVal) throw new Error('Okänd kategori: ' + category)
   const res = await fetch(`/api/menu/${enumVal}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, description, price: parseFloat(price), available: available ?? true }),
+    body: JSON.stringify({ name, description, price: parseFloat(price), options: options ?? false }),
   })
   if (!res.ok) throw new Error('Kunde inte lägga till rätten')
 }
@@ -146,6 +147,27 @@ export async function addCarteItem(category, { name, description, price, availab
 export async function deleteCarteItem(id) {
   const res = await fetch(`/api/menu/${id}`, { method: 'DELETE' })
   if (!res.ok) throw new Error('Kunde inte ta bort rätten')
+}
+
+// uppdaterar en carte-rätt via id
+export async function updateCarteItem(id, { name, description, price, options }) {
+  const res = await fetch(`/api/menu/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, menuItemId: id, description, price: parseFloat(price), options: options ?? false }),
+  })
+  if (!res.ok) throw new Error('Kunde inte uppdatera rätten')
+}
+
+// hämtar alla bord
+export async function getTables() {
+  try {
+    const res = await fetch('/api/tables')
+    if (!res.ok) throw new Error('API svarade inte')
+    return await res.json()
+  } catch {
+    return []
+  }
 }
 
 // hämtar alla musikevenemang, fallback till mockData
@@ -203,11 +225,11 @@ export async function getBookings() {
 }
 
 // POST ny bokning
-export async function addBooking({ firstName, lastName, phoneNumber, guestCount, date }) {
+export async function addBooking({ firstName, lastName, phoneNumber, guestCount, date, tableId }) {
   const res = await fetch('/api/bookings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ firstName, lastName, phoneNumber, guestCount, date, tableId: null, tableNumber: null }),
+    body: JSON.stringify({ firstName, lastName, phoneNumber, guestCount, date, tableId: tableId || null, tableNumber: null }),
   })
   if (!res.ok) throw new Error('Kunde inte lägga till bokningen')
 }
@@ -230,4 +252,61 @@ export async function updateBooking(bookingId, { firstName, lastName, phoneNumbe
 
 export async function createBooking(data) {
   return addBooking(data)
+}
+
+// mock-anställda för schema (används som fallback tills backend finns)
+const mockScheduleEmployees = [
+  { employeeId: 1, firstName: 'Anna', lastName: 'Lindström', role: 'WAITER' },
+  { employeeId: 2, firstName: 'Björn', lastName: 'Karlsson', role: 'MANAGER' },
+  { employeeId: 3, firstName: 'Cecilia', lastName: 'Berg', role: 'WAITER' },
+  { employeeId: 4, firstName: 'David', lastName: 'Svensson', role: 'WAITER' },
+]
+
+// genererar mock-skift med dagspass (10-16) och kvällspass (16-22)
+function generateMockShifts(weekStart) {
+  const monday = new Date(weekStart + 'T00:00:00')
+  const shifts = []
+  let id = 1
+  // { empId, day (0=mån), type: 'DAG'|'KVÄLL' }
+  const schedules = [
+    { empId: 1, day: 0, type: 'DAG' },   { empId: 1, day: 2, type: 'DAG' },   { empId: 1, day: 4, type: 'KVÄLL' },
+    { empId: 2, day: 0, type: 'DAG' },   { empId: 2, day: 1, type: 'DAG' },   { empId: 2, day: 2, type: 'DAG' },
+    { empId: 2, day: 3, type: 'KVÄLL' }, { empId: 2, day: 4, type: 'KVÄLL' },
+    { empId: 3, day: 1, type: 'KVÄLL' }, { empId: 3, day: 3, type: 'DAG' },   { empId: 3, day: 5, type: 'KVÄLL' },
+    { empId: 4, day: 0, type: 'KVÄLL' }, { empId: 4, day: 1, type: 'DAG' },   { empId: 4, day: 5, type: 'DAG' },   { empId: 4, day: 6, type: 'KVÄLL' },
+  ]
+  for (const { empId, day, type } of schedules) {
+    const startHour = type === 'DAG' ? 10 : 16
+    const endHour   = type === 'DAG' ? 16 : 22
+    const start = new Date(monday)
+    start.setDate(start.getDate() + day)
+    start.setHours(startHour, 0, 0, 0)
+    const end = new Date(monday)
+    end.setDate(end.getDate() + day)
+    end.setHours(endHour, 0, 0, 0)
+    shifts.push({ shiftId: id++, employeeId: empId, startTime: start.toISOString(), endTime: end.toISOString(), shiftStatus: 'SCHEDULED' })
+  }
+  return shifts
+}
+
+// hämtar alla anställda, fallback till mock
+export async function getEmployees() {
+  try {
+    const res = await fetch('/api/employees')
+    if (!res.ok) throw new Error('API svarade inte')
+    return await res.json()
+  } catch {
+    return mockScheduleEmployees
+  }
+}
+
+// hämtar skift för en vecka (weekStart = "YYYY-MM-DD" för måndag), fallback till mock
+export async function getShiftsForWeek(weekStart) {
+  try {
+    const res = await fetch(`/api/shifts?week=${weekStart}`)
+    if (!res.ok) throw new Error('API svarade inte')
+    return await res.json()
+  } catch {
+    return generateMockShifts(weekStart)
+  }
 }

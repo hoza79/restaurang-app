@@ -13,6 +13,7 @@ function MusicAdmin() {
   const [showAdd, setShowAdd] = useState(false)
   const [newEvent, setNewEvent] = useState({ title: '', description: '', date: '', imgPath: '' })
   const [imagePreview, setImagePreview] = useState(null)
+  const [editPreview, setEditPreview] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [editingId, setEditingId] = useState(null)
@@ -56,6 +57,7 @@ function MusicAdmin() {
 
   const handleEditStart = (event) => {
     setEditingId(event.id)
+    setEditPreview(event.imgPath || null)
     setEditValues({
       title: event.title,
       description: event.description || '',
@@ -70,6 +72,7 @@ function MusicAdmin() {
     try {
       await updateMusicEvent(id, editValues)
       setEditingId(null)
+      setEditPreview(null)
       fetchEvents()
     } catch {
       setError('Kunde inte uppdatera evenemanget')
@@ -153,7 +156,26 @@ function MusicAdmin() {
                 {editingId === event.id ? (
                   <>
                     <td>
-                      <input type="text" placeholder="Bild-URL" value={editValues.imgPath} onChange={(e) => setEditValues({ ...editValues, imgPath: e.target.value })} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', marginBottom: 0, fontSize: '0.75rem' }}>
+                          Välj bild
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={(e) => {
+                              const file = e.target.files[0]
+                              if (!file) return
+                              setEditPreview(URL.createObjectURL(file))
+                              setEditValues({ ...editValues, imgPath: file.name })
+                            }}
+                          />
+                        </label>
+                        {editPreview
+                          ? <img src={editPreview} alt="Förhandsvisning" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                          : <span style={{ color: 'var(--text-muted-on-light)', fontSize: '0.75rem' }}>Ingen bild</span>
+                        }
+                      </div>
                     </td>
                     <td>
                       <input type="datetime-local" value={editValues.date} onChange={(e) => setEditValues({ ...editValues, date: e.target.value })} style={{ width: '180px' }} />
@@ -165,7 +187,7 @@ function MusicAdmin() {
                       <input type="text" value={editValues.description} onChange={(e) => setEditValues({ ...editValues, description: e.target.value })} />
                     </td>
                     <td className="actions">
-                      <button className="btn btn-outline btn-sm" onClick={() => setEditingId(null)}>Avbryt</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => { setEditingId(null); setEditPreview(null) }}>Avbryt</button>
                       <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(event.id)} disabled={saving}>
                         {saving ? '...' : 'Spara'}
                       </button>

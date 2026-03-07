@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getBookings, addBooking, deleteBooking, updateBooking } from '../../api/menuApi'
+import { getBookings, addBooking, deleteBooking, updateBooking, getTables } from '../../api/menuApi'
 
 function formatDateTime(dateStr) {
   if (!dateStr) return '-'
@@ -9,15 +9,19 @@ function formatDateTime(dateStr) {
 
 function BookingAdmin() {
   const [bookingList, setBookingList] = useState([])
+  const [tables, setTables] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
-  const [newBooking, setNewBooking] = useState({ firstName: '', lastName: '', phoneNumber: '', guestCount: '', date: '' })
+  const [newBooking, setNewBooking] = useState({ firstName: '', lastName: '', phoneNumber: '', guestCount: '', date: '', tableId: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [editValues, setEditValues] = useState({})
 
-  useEffect(() => { fetchBookings() }, [])
+  useEffect(() => {
+    fetchBookings()
+    getTables().then(setTables)
+  }, [])
 
   function fetchBookings() {
     setLoading(true)
@@ -36,8 +40,9 @@ function BookingAdmin() {
       await addBooking({
         ...newBooking,
         guestCount: parseInt(newBooking.guestCount) || 0,
+        tableId: newBooking.tableId ? parseInt(newBooking.tableId) : null,
       })
-      setNewBooking({ firstName: '', lastName: '', phoneNumber: '', guestCount: '', date: '' })
+      setNewBooking({ firstName: '', lastName: '', phoneNumber: '', guestCount: '', date: '', tableId: '' })
       setShowAdd(false)
       fetchBookings()
     } catch {
@@ -65,7 +70,7 @@ function BookingAdmin() {
       phoneNumber: b.phoneNumber || '',
       guestCount: b.guestCount,
       date: b.date ? b.date.slice(0, 16) : '',
-      tableId: b.tableId ?? null,
+      tableId: b.tableId ?? '',
     })
   }
 
@@ -76,6 +81,7 @@ function BookingAdmin() {
       await updateBooking(id, {
         ...editValues,
         guestCount: parseInt(editValues.guestCount) || 0,
+        tableId: editValues.tableId ? parseInt(editValues.tableId) : null,
       })
       setEditingId(null)
       fetchBookings()
@@ -136,9 +142,11 @@ function BookingAdmin() {
                 <input type="number" placeholder="2" min="1" value={newBooking.guestCount} onChange={(e) => setNewBooking({ ...newBooking, guestCount: e.target.value })} />
               </div>
             </div>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Datum &amp; tid</label>
-              <input type="datetime-local" value={newBooking.date} onChange={(e) => setNewBooking({ ...newBooking, date: e.target.value })} />
+            <div className="form-row">
+              <div>
+                <label>Datum &amp; tid</label>
+                <input type="datetime-local" value={newBooking.date} onChange={(e) => setNewBooking({ ...newBooking, date: e.target.value })} />
+              </div>
             </div>
             {error && <p style={{ color: 'red', margin: '0.5rem 0' }}>{error}</p>}
             <div className="form-actions">
@@ -159,7 +167,14 @@ function BookingAdmin() {
               <tr key={b.bookingId}>
                 {editingId === b.bookingId ? (
                   <>
-                    <td>{b.tableNumber ? `Bord ${b.tableNumber}` : '-'}</td>
+                    <td>
+                      <select value={editValues.tableId} onChange={(e) => setEditValues({ ...editValues, tableId: e.target.value })}>
+                        <option value="">Inget bord</option>
+                        {tables.map(t => (
+                          <option key={t.tableId} value={t.tableId}>Bord {t.tableNumber}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td>
                       <input type="text" value={editValues.firstName} onChange={(e) => setEditValues({ ...editValues, firstName: e.target.value })} style={{ width: '90px' }} />
                       {' '}
