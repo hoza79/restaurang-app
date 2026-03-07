@@ -123,7 +123,7 @@ public class MusicResource{
             out = new FileOutputStream(file);
 
             in.transferTo(out);
-            String path = "/Images/" + fileName;
+            String path = "domains/domain1/Images/" + fileName;
 
             return Response.status(Response.Status.CREATED).entity(path).build();
 
