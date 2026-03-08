@@ -300,13 +300,76 @@ export async function getEmployees() {
   }
 }
 
-// hämtar skift för en vecka (weekStart = "YYYY-MM-DD" för måndag), fallback till mock
+// hjälpfunktion: konverterar dag + passtyp + veckans måndag till LocalDateTime-strängar
+function shiftToDateTimes(weekStart, dayOfWeek, shiftType) {
+  const monday = new Date(weekStart + 'T00:00:00')
+  const startHour = shiftType === 'DAG' ? 10 : 16
+  const endHour   = shiftType === 'DAG' ? 16 : 22
+  const start = new Date(monday)
+  start.setDate(start.getDate() + dayOfWeek)
+  start.setHours(startHour, 0, 0, 0)
+  const end = new Date(monday)
+  end.setDate(end.getDate() + dayOfWeek)
+  end.setHours(endHour, 0, 0, 0)
+  // LocalDateTime utan tidzon
+  const pad = n => String(n).padStart(2, '0')
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`
+  return { startTime: fmt(start), endTime: fmt(end) }
+}
+
+// hämtar skift för en vecka - API returnerar alla, filtrera på frontend
 export async function getShiftsForWeek(weekStart) {
   try {
-    const res = await fetch(`/api/shifts?week=${weekStart}`)
+    const res = await fetch('/api/shifts')
     if (!res.ok) throw new Error('API svarade inte')
-    return await res.json()
+    const all = await res.json()
+    const mon = new Date(weekStart + 'T00:00:00')
+    const sun = new Date(mon)
+    sun.setDate(sun.getDate() + 7)
+    return all.filter(s => {
+      const d = new Date(s.startTime)
+      return d >= mon && d < sun
+    })
   } catch {
     return generateMockShifts(weekStart)
   }
+}
+
+// POST nytt skift, returnerar skapade ShiftDto (med shiftId)
+export async function addShift(employeeId, dayOfWeek, shiftType, weekStart) {
+  const { startTime, endTime } = shiftToDateTimes(weekStart, dayOfWeek, shiftType)
+  const res = await fetch('/api/shifts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ employeeId, startTime, endTime }),
+  })
+  if (!res.ok) throw new Error('Kunde inte lägga till passet')
+  return await res.json()
+}
+
+// PUT uppdatera skift (byter passtyp = nya tider)
+export async function updateShift(shiftId, employeeId, dayOfWeek, shiftType, weekStart) {
+  const { startTime, endTime } = shiftToDateTimes(weekStart, dayOfWeek, shiftType)
+  const res = await fetch(`/api/shifts/${shiftId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ employeeId, startTime, endTime }),
+  })
+  if (!res.ok) throw new Error('Kunde inte uppdatera passet')
+}
+
+// DELETE skift
+export async function deleteShift(shiftId) {
+  const res = await fetch(`/api/shifts/${shiftId}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error('Kunde inte ta bort passet')
+}
+
+// POST bild till musik, returnerar relativ sökväg (t.ex. "domains/domain1/Images/namn123.jpg")
+export async function uploadMusicImage(file, name) {
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append('name', name)
+  const res = await fetch('/api/music/images', { method: 'POST', body: formData })
+  if (!res.ok) throw new Error('Kunde inte ladda upp bilden')
+  return await res.text()
 }

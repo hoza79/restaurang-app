@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getEmployees, getShiftsForWeek } from '../../api/menuApi'
+import { getEmployees, getShiftsForWeek, addShift, updateShift, deleteShift } from '../../api/menuApi'
 
 const SHIFT_TYPES = {
   DAG: { label: 'Dagspass', time: '10:00–16:00' },
@@ -25,7 +25,10 @@ function getMonday(date) {
 }
 
 function toDateStr(date) {
-  return date.toISOString().slice(0, 10)
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 function getWeekOptions() {
@@ -125,10 +128,10 @@ function SchemaAdmin() {
     return localShifts.filter(s => s.employeeId === employeeId && s.dayOfWeek === dayOfWeek)
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
+    try { await deleteShift(id) } catch {}
     setLocalShifts(prev => prev.filter(s => s.id !== id))
     if (editingId === id) setEditingId(null)
-    // TODO: DELETE /api/shifts/{id}
   }
 
   function handleEditStart(shift) {
@@ -136,13 +139,17 @@ function SchemaAdmin() {
     setEditType(shift.shiftType)
   }
 
-  function handleEditSave(id) {
+  async function handleEditSave(id) {
+    const shift = localShifts.find(s => s.id === id)
+    if (!shift) return
+    try {
+      await updateShift(id, shift.employeeId, shift.dayOfWeek, editType, selectedWeek)
+    } catch {}
     setLocalShifts(prev => prev.map(s => s.id === id ? { ...s, shiftType: editType } : s))
     setEditingId(null)
-    // TODO: PUT /api/shifts/{id}
   }
 
-  function handleAdd() {
+  async function handleAdd() {
     setAddError('')
     const { employeeId, dayOfWeek, shiftType } = addForm
     if (!employeeId || dayOfWeek === '' || !shiftType) {
@@ -156,16 +163,28 @@ function SchemaAdmin() {
       setAddError('Det passet finns redan för den anställde den dagen')
       return
     }
-    setLocalShifts(prev => [...prev, { id: Date.now(), employeeId: empId, dayOfWeek: day, shiftType }])
+    try {
+      const created = await addShift(empId, day, shiftType, selectedWeek)
+      setLocalShifts(prev => [...prev, apiToLocal(created, created.shiftId)])
+    } catch {
+      // fallback: lägg till lokalt om API inte svarar
+      setLocalShifts(prev => [...prev, { id: Date.now(), employeeId: empId, dayOfWeek: day, shiftType }])
+    }
     setAddForm(f => ({ ...f, shiftType: '' }))
-    // TODO: POST /api/shifts
   }
 
-  function handleDuplicate() {
+  async function handleDuplicate() {
     const nextMon = new Date(selectedWeek + 'T00:00:00')
     nextMon.setDate(nextMon.getDate() + 7)
-    pendingShifts.current = localShifts.map(s => ({ ...s, id: Date.now() + Math.random() }))
-    setSelectedWeek(toDateStr(nextMon))
+    const nextWeek = toDateStr(nextMon)
+    // spara skiften till backend för nästa vecka
+    const results = await Promise.all(
+      localShifts.map(s => addShift(s.employeeId, s.dayOfWeek, s.shiftType, nextWeek).catch(() => null))
+    )
+    const saved = results.filter(Boolean).map(apiToLocal)
+    // fallback till lokalt state om API inte svarar
+    pendingShifts.current = saved.length > 0 ? saved : localShifts.map(s => ({ ...s, id: Date.now() + Math.random() }))
+    setSelectedWeek(nextWeek)
   }
 
   if (loading) return <p style={{ padding: '2rem' }}>Laddar...</p>

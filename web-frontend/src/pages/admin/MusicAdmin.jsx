@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getMusicEvents, addMusicEvent, deleteMusicEvent, updateMusicEvent } from '../../api/menuApi'
+import { getMusicEvents, addMusicEvent, deleteMusicEvent, updateMusicEvent, uploadMusicImage } from '../../api/menuApi'
 
 function formatDateTime(dateStr) {
   if (!dateStr) return '-'
@@ -12,7 +12,9 @@ function MusicAdmin() {
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [newEvent, setNewEvent] = useState({ title: '', description: '', date: '', imgPath: '' })
+  const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
+  const [editFile, setEditFile] = useState(null)
   const [editPreview, setEditPreview] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -33,8 +35,13 @@ function MusicAdmin() {
     setSaving(true)
     setError(null)
     try {
-      await addMusicEvent(newEvent)
+      let imgPath = newEvent.imgPath
+      if (imageFile) {
+        imgPath = await uploadMusicImage(imageFile, newEvent.title)
+      }
+      await addMusicEvent({ ...newEvent, imgPath })
       setNewEvent({ title: '', description: '', date: '', imgPath: '' })
+      setImageFile(null)
       setImagePreview(null)
       setShowAdd(false)
       fetchEvents()
@@ -57,6 +64,7 @@ function MusicAdmin() {
 
   const handleEditStart = (event) => {
     setEditingId(event.id)
+    setEditFile(null)
     setEditPreview(event.imgPath || null)
     setEditValues({
       title: event.title,
@@ -70,8 +78,13 @@ function MusicAdmin() {
     setSaving(true)
     setError(null)
     try {
-      await updateMusicEvent(id, editValues)
+      let imgPath = editValues.imgPath
+      if (editFile) {
+        imgPath = await uploadMusicImage(editFile, editValues.title)
+      }
+      await updateMusicEvent(id, { ...editValues, imgPath })
       setEditingId(null)
+      setEditFile(null)
       setEditPreview(null)
       fetchEvents()
     } catch {
@@ -125,8 +138,8 @@ function MusicAdmin() {
                     onChange={(e) => {
                       const file = e.target.files[0]
                       if (!file) return
+                      setImageFile(file)
                       setImagePreview(URL.createObjectURL(file))
-                      setNewEvent({ ...newEvent, imgPath: file.name })
                     }}
                   />
                 </label>
@@ -166,8 +179,8 @@ function MusicAdmin() {
                             onChange={(e) => {
                               const file = e.target.files[0]
                               if (!file) return
+                              setEditFile(file)
                               setEditPreview(URL.createObjectURL(file))
-                              setEditValues({ ...editValues, imgPath: file.name })
                             }}
                           />
                         </label>
