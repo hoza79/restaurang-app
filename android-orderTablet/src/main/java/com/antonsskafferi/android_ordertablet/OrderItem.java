@@ -21,7 +21,7 @@ public class OrderItem {
         this.menuCategory = menuCategory;
         this.courseSlot   = courseSlot;
         this.quantity     = 1;
-        // Dryck → BAR, allt annat → KITCHEN
+        // Dryck -> BAR, allt annat -> KITCHEN
         this.destination  = (courseSlot == 0) ? Destination.BAR : Destination.KITCHEN;
         this.menuItemId  = menuItemId;
     }

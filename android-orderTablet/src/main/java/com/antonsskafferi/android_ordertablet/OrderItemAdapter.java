@@ -34,8 +34,8 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.VH> 
         StringBuilder d = new StringBuilder(it.courseLabel());
         if (it.cooking != null && !it.cooking.isEmpty())          d.append(" · ").append(it.cooking);
         if (it.sides   != null && !it.sides.isEmpty())            d.append(" · ").append(String.join(", ", it.sides));
-        if (it.comment != null && !it.comment.isEmpty())          d.append("\n💬 ").append(it.comment);
-        if (it.sentAt > 0)                                        d.append("  ✓ skickad");
+        if (it.comment != null && !it.comment.isEmpty())          d.append("\n").append(it.comment);
+        if (it.sentAt > 0)                                        d.append(" - skickad");
 
         h.tv2.setText(d);
         h.itemView.setOnLongClickListener(v -> {

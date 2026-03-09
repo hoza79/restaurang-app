@@ -52,9 +52,6 @@ public class MenuData {
         for (com.antonsskafferi.android_ordertablet.net.MenuCarteItemDto it : items) {
             if (it == null || it.menuItemId == null || it.name == null) continue;
 
-            // Optional: hide unavailable items (Not used anymore but can be reintroduced later if we want this functionality)
-            //if (it.available != null && !it.available) continue;
-
             double price = (it.price != null) ? it.price : 0.0;
 
             MenuItem ui = new MenuItem(

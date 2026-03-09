@@ -77,7 +77,7 @@ public class DishDetailActivity extends AppCompatActivity {
         etComment.setHintTextColor(GREY);
 
         findViewById(R.id.btnAddToOrder).setOnClickListener(v -> {
-            // ← FIX: 5-args konstruktor med defaultSlot
+            // FIX: 5-args konstruktor med defaultSlot
             OrderItem item = new OrderItem(dish.name, dish.price, dish.category, defaultSlot, dish.id);
 
             if (dish.hasCookingOptions) {

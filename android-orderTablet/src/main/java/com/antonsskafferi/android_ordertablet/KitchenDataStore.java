@@ -27,11 +27,11 @@ public class KitchenDataStore {
             StringBuilder sb = new StringBuilder(item.dishName);
             if (item.quantity > 1) sb.append(" x").append(item.quantity);
             if (item.cooking != null && !item.cooking.isEmpty())
-                sb.append(" · ").append(item.cooking);
+                sb.append(" - ").append(item.cooking);
             if (item.sides != null && !item.sides.isEmpty())
-                sb.append(" · ").append(String.join(", ", item.sides));
+                sb.append(" - ").append(String.join(", ", item.sides));
             if (item.comment != null && !item.comment.isEmpty())
-                sb.append("\n   💬 ").append(item.comment);
+                sb.append("\n   ").append(item.comment);
             dishes.add(sb.toString());
         }
 
