@@ -1,3 +1,4 @@
+/*
 package org.miun.se.backend.init;
 
 import jakarta.annotation.PostConstruct;
@@ -44,3 +45,4 @@ public class LoadSwapRequests {
 
     }
 }
+ */

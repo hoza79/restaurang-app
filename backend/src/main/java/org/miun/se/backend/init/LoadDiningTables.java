@@ -31,6 +31,11 @@ public class LoadDiningTables {
         DiningTable t3 = new DiningTable(3, 4);
         DiningTable t4 = new DiningTable(4, 6);
         DiningTable t5 = new DiningTable(5, 8);
+        DiningTable t6 = new DiningTable(6, 2);
+        DiningTable t7 = new DiningTable(7, 4);
+        DiningTable t8 = new DiningTable(8, 4);
+        DiningTable t9 = new DiningTable(9, 6);
+        DiningTable t10 = new DiningTable(10, 4);
 
         t5.setTableStatus(TableStatus.AVAILABLE);
 
@@ -39,5 +44,10 @@ public class LoadDiningTables {
         em.persist(t3);
         em.persist(t4);
         em.persist(t5);
+        em.persist(t6);
+        em.persist(t7);
+        em.persist(t8);
+        em.persist(t9);
+        em.persist(t10);
     }
 }
