@@ -7,11 +7,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.antonsskafferi.staff.network.EmployeeDto;
 import com.antonsskafferi.staff.network.RetrofitClient;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -20,8 +23,17 @@ import retrofit2.Response;
 /**
  * Handles employee login functionality.
  * Supports auto-login if user session exists in SharedPreferences.
+ * Supports QR code scanning for login.
  */
 public class LoginActivity extends AppCompatActivity {
+
+    private final ActivityResultLauncher<ScanOptions> qrCodeLauncher = registerForActivityResult(new ScanContract(), result -> {
+        if (result.getContents() != null) {
+            String scannedEmail = result.getContents();
+            SharedPreferences prefs = getSharedPreferences("StaffPrefs", MODE_PRIVATE);
+            performLogin(scannedEmail, prefs);
+        }
+    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +50,7 @@ public class LoginActivity extends AppCompatActivity {
 
         EditText etEmail = findViewById(R.id.etEmployeeEmail);
         Button btnLogin = findViewById(R.id.btnLogin);
+        Button btnScanQr = findViewById(R.id.btnScanQr);
 
         // Login button click handler
         btnLogin.setOnClickListener(v -> {
@@ -50,6 +63,16 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 performLogin(email, prefs);
             }
+        });
+
+        // QR Scan button click handler
+        btnScanQr.setOnClickListener(v -> {
+            ScanOptions options = new ScanOptions();
+            options.setPrompt("Skanna din inloggnings-QR");
+            options.setBeepEnabled(true);
+            options.setOrientationLocked(true);
+            options.setCaptureActivity(CaptureActivityPortrait.class);
+            qrCodeLauncher.launch(options);
         });
     }
 
@@ -64,7 +87,7 @@ public class LoginActivity extends AppCompatActivity {
                     saveUserSession(response.body(), prefs);
                     navigateToSchedule();
                 } else {
-                    showToast("Inloggning misslyckades: Fel e-post");
+                    showToast("Inloggning misslyckades: Fel e-post eller QR");
                 }
             }
 
