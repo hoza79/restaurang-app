@@ -26,7 +26,6 @@ public class LoadEmployees {
 
         em.persist(new Employee("Anna", "Berg", EmployeeRole.WAITER, "070-1234567", "anna.berg@antons.se"));
         em.persist(new Employee("Erik", "Sten", EmployeeRole.WAITER, "070-2345678", "erik.sten@antons.se"));
-        em.persist(new Employee("Sara", "Johansson", EmployeeRole.WAITER, "070-3456789", "sara.johansson@antons.se"));
-        em.persist(new Employee("Oskar", "Nilsson", EmployeeRole.WAITER, "070-4567890", "oskar.nilsson@antons.se"));
+        em.persist(new Employee("Sara", "Grus", EmployeeRole.WAITER, "070-3456789", "sara.grus@antons.se"));
     }
 }
