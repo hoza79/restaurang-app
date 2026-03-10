@@ -8,30 +8,39 @@ import android.os.Handler;
 import android.view.Gravity;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-import java.text.SimpleDateFormat;
-import java.util.*;
+
 import com.antonsskafferi.android_ordertablet.net.ApiClient;
+import com.antonsskafferi.android_ordertablet.net.BookingDto;
+import com.antonsskafferi.android_ordertablet.net.CreateOrderRequest;
 import com.antonsskafferi.android_ordertablet.net.DiningTableDto;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import android.util.Log;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class TableSelectActivity extends AppCompatActivity {
-    private final List<DiningTableDto> tables = new ArrayList<>();
-    private boolean loadingTables = false;
 
-    private static final String TAG = "TableSelectActivity";
+    private final List<DiningTableDto> tables = new ArrayList<>();
+
+    private boolean pendingTables   = false;
+    private boolean pendingBookings = false;
+
+    private final List<BookingDto> todayBookings = new ArrayList<>();
+
     private final Handler clockHandler = new Handler();
     private TextView tvTime;
+    private TextView tvBookingSummary; // ny rad i headern
 
     @Override
     protected void onCreate(Bundle s) {
         super.onCreate(s);
         setContentView(R.layout.activity_table_select);
-        tvTime = findViewById(R.id.tvCurrentTime);
+        tvTime           = findViewById(R.id.tvCurrentTime);
+        tvBookingSummary = findViewById(R.id.tvBookingSummary);
         startClock();
-
         findViewById(R.id.btnKitchenView).setOnClickListener(v ->
                 startActivity(new Intent(this, KitchenActivity.class)));
     }
@@ -39,115 +48,144 @@ public class TableSelectActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        refreshTables(); // fetch + then buildGrid()
+        fetchAll();
     }
 
-    private void refreshTables() {
-        if (loadingTables) return;
-        loadingTables = true;
+    private void fetchAll() {
+        pendingTables   = true;
+        pendingBookings = true;
+        fetchTables();
+        fetchBookings();
+    }
 
+    private void fetchTables() {
         ApiClient.api().getTables().enqueue(new Callback<List<DiningTableDto>>() {
             @Override
-            public void onResponse(Call<List<DiningTableDto>> call, Response<List<DiningTableDto>> resp) {
-                loadingTables = false;
-
-                if (!resp.isSuccessful() || resp.body() == null) {
-                    Toast.makeText(TableSelectActivity.this,
-                            "Kunde inte hämta bord (" + resp.code() + ")", Toast.LENGTH_SHORT).show();
-                    buildGrid(); // builds using whatever is currently in `tables`
-                    return;
+            public void onResponse(Call<List<DiningTableDto>> c, Response<List<DiningTableDto>> r) {
+                pendingTables = false;
+                if (r.isSuccessful() && r.body() != null) {
+                    tables.clear();
+                    tables.addAll(r.body());
+                    tables.sort((a, b) -> Integer.compare(
+                            a.tableNumber != null ? a.tableNumber : 0,
+                            b.tableNumber != null ? b.tableNumber : 0));
                 }
-
-                tables.clear();
-                tables.addAll(resp.body());
-
-                // Sort by tableNumber (stable grid)
-                tables.sort((a, b) -> {
-                    int an = a.tableNumber != null ? a.tableNumber : 0;
-                    int bn = b.tableNumber != null ? b.tableNumber : 0;
-                    return Integer.compare(an, bn);
-                });
-
-                buildGrid();
+                buildIfReady();
             }
-
             @Override
-            public void onFailure(Call<List<DiningTableDto>> call, Throwable t) {
-                loadingTables = false;
-                Log.e(TAG, "Failed to fetch tables: " + t.getMessage(), t);
-                Toast.makeText(TableSelectActivity.this,
-                        "Ingen kontakt med servern", Toast.LENGTH_SHORT).show();
-                buildGrid();
+            public void onFailure(Call<List<DiningTableDto>> c, Throwable t) {
+                pendingTables = false;
+                buildIfReady();
             }
         });
+    }
+
+    private void fetchBookings() {
+        ApiClient.api().getBookings().enqueue(new Callback<List<BookingDto>>() {
+            @Override
+            public void onResponse(Call<List<BookingDto>> c, Response<List<BookingDto>> r) {
+                pendingBookings = false;
+                todayBookings.clear();
+                if (r.isSuccessful() && r.body() != null) {
+                    String today = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+                    for (BookingDto b : r.body()) {
+                        if (b.date != null && b.date.startsWith(today))
+                            todayBookings.add(b);
+                    }
+                }
+                buildIfReady();
+            }
+            @Override
+            public void onFailure(Call<List<BookingDto>> c, Throwable t) {
+                pendingBookings = false;
+                buildIfReady();
+            }
+        });
+    }
+
+    private void buildIfReady() {
+        if (pendingTables || pendingBookings) return;
+
+        // Uppdatera bokningssammanfattning i headern
+        if (!todayBookings.isEmpty()) {
+            StringBuilder sb = new StringBuilder("Antal bokningar idag: " + todayBookings.size() + "\n\n");
+            for (int i = 0; i < todayBookings.size(); i++) {
+                BookingDto b = todayBookings.get(i);
+                String tid = b.date != null && b.date.length() >= 16
+                        ? b.date.substring(11, 16) : "";
+                sb.append(b.firstName).append(" ").append(b.lastName)
+                        .append("  ·  ").append(b.guestCount).append(" personer")
+                        .append("  ·  kl ").append(tid);
+                if (i < todayBookings.size() - 1) sb.append("\n");
+            }
+            tvBookingSummary.setText(sb.toString());
+            tvBookingSummary.setVisibility(android.view.View.VISIBLE);
+        } else {
+            tvBookingSummary.setVisibility(android.view.View.GONE);
+        }
+
+        buildGrid();
     }
 
     private void buildGrid() {
         GridLayout grid = findViewById(R.id.tableGrid);
         grid.removeAllViews();
-
         if (tables.isEmpty()) {
-            // Fallback: show 10 “unknown status” tables if API failed
-            for (int i = 0; i < 10; i++) {
-                int num = i + 1;
-                addTableCard(grid, num, null, "UNKNOWN");
-            }
+            for (int i = 1; i <= 10; i++) addCard(grid, i, null, "UNKNOWN");
         } else {
-            for (DiningTableDto t : tables) {
-                if (t.tableNumber == null) continue;
-                addTableCard(grid, t.tableNumber, t.tableId, t.tableStatus);
-            }
+            for (DiningTableDto t : tables)
+                if (t.tableNumber != null) addCard(grid, t.tableNumber, t.tableId, t.tableStatus);
         }
     }
 
-    private void addTableCard(GridLayout grid, int tableNumber, Integer tableId, String tableStatus) {
+    private void addCard(GridLayout grid, int tableNum, Integer tableId, String status) {
+        boolean hasNota = Cart.hasOpenSession(tableNum);
 
-        boolean hasNota = Cart.hasOpenSession(tableNumber);
-
-        String st = (tableStatus == null) ? "UNKNOWN" : tableStatus.trim().toUpperCase(Locale.ROOT);
-        boolean isUnknown   = st.isEmpty() || st.equals("UNKNOWN") || st.equals("NULL");
-        boolean isAvailable = st.equals("AVAILABLE");
-        boolean isOccupied  = !isUnknown && !isAvailable;
+        String st = status == null ? "UNKNOWN" : status.trim().toUpperCase(Locale.ROOT);
+        boolean isOccupied = !st.equals("AVAILABLE") && !st.equals("UNKNOWN") && !st.equals("NULL") && !st.isEmpty();
+        boolean isUnknown  = st.equals("UNKNOWN") || st.equals("NULL") || st.isEmpty();
 
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER);
-
-        // Färg: guld-ton = öppen nota | orange-ton = upptaget | grå = ledig/okänd
-        int bgColor = hasNota
+        card.setBackgroundColor(hasNota
                 ? Color.parseColor("#3D2E00")
-                : isOccupied
-                ? Color.parseColor("#2A1A0E")
-                : Color.parseColor("#252525");
+                : isOccupied ? Color.parseColor("#2A1A0E")
+                : Color.parseColor("#252525"));
 
-        card.setBackgroundColor(bgColor);
-
-        GridLayout.LayoutParams p = new GridLayout.LayoutParams();
-        p.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        p.rowSpec    = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        p.setMargins(8, 8, 8, 8);
-        p.width = 0;
-        p.height = dp(100);
-        card.setLayoutParams(p);
+        GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
+        lp.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        lp.rowSpec    = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        lp.setMargins(8, 8, 8, 8);
+        lp.width  = 0;
+        lp.height = dp(110);
+        card.setLayoutParams(lp);
 
         TextView tvNum = new TextView(this);
-        tvNum.setText(String.valueOf(tableNumber));
+        tvNum.setText(String.valueOf(tableNum));
         tvNum.setTextSize(26);
         tvNum.setTypeface(null, Typeface.BOLD);
         tvNum.setTextColor(Color.parseColor("#EEEEEE"));
+        tvNum.setGravity(Gravity.CENTER);
+        tvNum.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView tvSt = new TextView(this);
         tvSt.setTextSize(11);
-
+        tvSt.setGravity(Gravity.CENTER);
+        tvSt.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
         if (hasNota) {
             tvSt.setText("Öppen nota");
             tvSt.setTextColor(Color.parseColor("#C9A961"));
-        } else if (isUnknown) {
-            tvSt.setText("Okänd");
-            tvSt.setTextColor(Color.parseColor("#888888"));
         } else if (isOccupied) {
             tvSt.setText("Upptaget");
             tvSt.setTextColor(Color.parseColor("#FF6B6B"));
+        } else if (isUnknown) {
+            tvSt.setText("Okänd");
+            tvSt.setTextColor(Color.parseColor("#888888"));
         } else {
             tvSt.setText("Ledig");
             tvSt.setTextColor(Color.parseColor("#4ECDC4"));
@@ -159,43 +197,34 @@ public class TableSelectActivity extends AppCompatActivity {
         card.setClickable(true);
         card.setFocusable(true);
         card.setOnClickListener(v -> {
-            // If we couldn't fetch tableId, we can't create backend order
             if (tableId == null) {
                 Toast.makeText(this, "Saknar tableId från backend", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            Cart.CartSession s = Cart.openTable(tableNumber, tableId);
-
-            // Already created order for this session
-            if (s.orderId != null) {
+            Cart.CartSession sess = Cart.openTable(tableNum, tableId);
+            if (sess.orderId != null) {
                 startActivity(new Intent(this, OrderActivity.class));
                 return;
             }
-
-            final int EMPLOYEE_ID = 2; // fixed WAITER (typical seed id)
-
-            ApiClient.api().createOrder(new com.antonsskafferi.android_ordertablet.net.CreateOrderRequest(EMPLOYEE_ID, tableId))
-                    .enqueue(new retrofit2.Callback<java.util.Map<String, Object>>() {
+            ApiClient.api().createOrder(new CreateOrderRequest(2, tableId))
+                    .enqueue(new Callback<Map<String, Object>>() {
                         @Override
-                        public void onResponse(retrofit2.Call<java.util.Map<String, Object>> call,
-                                               retrofit2.Response<java.util.Map<String, Object>> resp) {
-                            if (!resp.isSuccessful() || resp.body() == null) {
+                        public void onResponse(Call<Map<String, Object>> c,
+                                               Response<Map<String, Object>> r) {
+                            if (!r.isSuccessful() || r.body() == null) {
                                 Toast.makeText(TableSelectActivity.this,
-                                        "Kunde inte skapa order (" + resp.code() + ")", Toast.LENGTH_SHORT).show();
+                                        "Kunde inte skapa order (" + r.code() + ")",
+                                        Toast.LENGTH_SHORT).show();
                                 return;
                             }
-                            Object idObj = resp.body().get("orderId");
-                            if (idObj instanceof Number) {
-                                s.orderId = ((Number) idObj).intValue();
-                            }
+                            Object id = r.body().get("orderId");
+                            if (id instanceof Number) sess.orderId = ((Number) id).intValue();
                             startActivity(new Intent(TableSelectActivity.this, OrderActivity.class));
                         }
-
                         @Override
-                        public void onFailure(retrofit2.Call<java.util.Map<String, Object>> call, Throwable t) {
+                        public void onFailure(Call<Map<String, Object>> c, Throwable t) {
                             Toast.makeText(TableSelectActivity.this,
-                                    "Ingen kontakt med servern (order)", Toast.LENGTH_SHORT).show();
+                                    "Ingen kontakt med servern", Toast.LENGTH_SHORT).show();
                         }
                     });
         });
