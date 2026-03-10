@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -21,9 +20,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Handles employee login functionality.
+ * Handles employee login via QR code.
  * Supports auto-login if user session exists in SharedPreferences.
- * Supports QR code scanning for login.
  */
 public class LoginActivity extends AppCompatActivity {
 
@@ -48,22 +46,7 @@ public class LoginActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_login);
 
-        EditText etEmail = findViewById(R.id.etEmployeeEmail);
-        Button btnLogin = findViewById(R.id.btnLogin);
         Button btnScanQr = findViewById(R.id.btnScanQr);
-
-        // Login button click handler
-        btnLogin.setOnClickListener(v -> {
-            String email = etEmail.getText().toString().trim();
-
-            if (email.isEmpty()) {
-                showToast("Vänligen fyll i din e-postadress");
-            } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                showToast("Vänligen ange en giltig e-postadress");
-            } else {
-                performLogin(email, prefs);
-            }
-        });
 
         // QR Scan button click handler
         btnScanQr.setOnClickListener(v -> {
@@ -87,7 +70,7 @@ public class LoginActivity extends AppCompatActivity {
                     saveUserSession(response.body(), prefs);
                     navigateToSchedule();
                 } else {
-                    showToast("Inloggning misslyckades: Fel e-post eller QR");
+                    showToast("Inloggning misslyckades: Ogiltig QR-kod");
                 }
             }
 
