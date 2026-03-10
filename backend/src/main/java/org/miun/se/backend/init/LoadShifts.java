@@ -41,14 +41,16 @@ public class LoadShifts {
         // Find Anna and Erik by their first names
         Optional<Employee> annaOpt = employees.stream().filter(e -> "Anna".equals(e.getFirstName())).findFirst();
         Optional<Employee> erikOpt = employees.stream().filter(e -> "Erik".equals(e.getFirstName())).findFirst();
+        Optional<Employee> saraOpt = employees.stream().filter(e -> "Sara".equals(e.getFirstName())).findFirst();
 
         if (annaOpt.isEmpty() || erikOpt.isEmpty()) {
-            System.err.println("Warning: Could not find both Anna and Erik. No shifts will be generated.");
+            System.err.println("Warning: Could not find Anna, Sara and Erik. No shifts will be generated.");
             return;
         }
 
         Employee anna = annaOpt.get();
         Employee erik = erikOpt.get();
+        Employee sara = saraOpt.get();
 
         // Start from the next or same Monday
         LocalDate startDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
@@ -74,6 +76,18 @@ public class LoadShifts {
 
             // Evening shift: 16:00 - 23:00
             em.persist(new Shift(eveningShiftEmployee, currentDate.atTime(16, 0), currentDate.atTime(23, 0)));
+        }
+
+        for (int i = 0; i < 14; i++) {
+
+            LocalDate currentDate = startDate.plusDays(i);
+
+            // Day shift: 08:00 - 16:00
+            em.persist(new Shift(sara, currentDate.atTime(8, 0), currentDate.atTime(16, 0)));
+
+            // Evening shift: 16:00 - 23:00
+            em.persist(new Shift(sara, currentDate.atTime(16, 0), currentDate.atTime(23, 0)));
+
         }
     }
 }

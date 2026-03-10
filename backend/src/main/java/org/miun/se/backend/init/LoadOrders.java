@@ -92,7 +92,7 @@ public class LoadOrders {
         // -------------------------------------------------
         // Dessert-only order
         // -------------------------------------------------
-        CustomerOrder dessertOrder = new CustomerOrder(tables.get(3), employees.get(3));
+        CustomerOrder dessertOrder = new CustomerOrder(tables.get(3), employees.get(1));
         em.persist(dessertOrder);
 
         OrderBatch dessertBatch = dessertOrder.addBatch(BatchType.DESSERT);
@@ -105,7 +105,7 @@ public class LoadOrders {
         // -------------------------------------------------
 
         // Create order
-        CustomerOrder appetizerOrder = new CustomerOrder(tables.get(4), employees.get(3));
+        CustomerOrder appetizerOrder = new CustomerOrder(tables.get(4), employees.get(2));
         // Persist order in DB
         em.persist(appetizerOrder);
         // Create batches
