@@ -69,7 +69,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
             // Rubrik
             TextView tvHdr = new TextView(this);
             tvHdr.setText(SLOT_LABELS[slot].toUpperCase()
-                    + (slot == 0 ? "  →  BAR" : "  →  KÖK"));
+                    + (slot == 0 ? "  ->  BAR" : "  ->  KÖK"));
             tvHdr.setTextSize(11); tvHdr.setTextColor(GREY);
             LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -124,12 +124,12 @@ public class ReviewOrderActivity extends AppCompatActivity {
                 StringBuilder spec = new StringBuilder();
                 if (item.cooking != null && !item.cooking.isEmpty()) spec.append(item.cooking);
                 if (item.sides != null && !item.sides.isEmpty()) {
-                    if (spec.length() > 0) spec.append(" · ");
+                    if (spec.length() > 0) spec.append(" - ");
                     spec.append(String.join(", ", item.sides));
                 }
                 if (item.comment != null && !item.comment.isEmpty()) {
                     if (spec.length() > 0) spec.append("\n");
-                    spec.append("💬 ").append(item.comment);
+                    spec.append(item.comment);
                 }
                 if (spec.length() > 0) {
                     TextView tvSpec = new TextView(this);
@@ -148,7 +148,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
                 tvPrice.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
 
                 Button btnDel = new Button(this);
-                btnDel.setText("✕"); btnDel.setTextSize(13); btnDel.setTextColor(RED);
+                btnDel.setText("X"); btnDel.setTextSize(13); btnDel.setTextColor(RED);
                 btnDel.setBackgroundColor(0); btnDel.setPadding(dp(8), 0, dp(4), 0);
                 btnDel.setVisibility(sent ? View.GONE : View.VISIBLE);
                 btnDel.setOnClickListener(v -> { session.removeItem(itemIdx); renderSections(); });
@@ -168,7 +168,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
 
             // Skicka-knapp (per slot)
             if (hasPending) {
-                String dest = (slot == 0) ? "baren 🍹" : "köket 🍳";
+                String dest = (slot == 0) ? "baren " : "köket ";
                 Button btn = new Button(this);
                 btn.setText("Skicka " + SLOT_LABELS[slot] + " till " + dest);
                 btn.setBackgroundColor(slot == 0 ? 0xFF1565C0 : 0xFF2E2E2E);
@@ -193,7 +193,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
                     if (fs == 0) {
                         session.markSlotSent(fs);
                         Toast.makeText(ReviewOrderActivity.this,
-                                "✓ " + SLOT_LABELS[fs] + " skickad till baren!",
+                                SLOT_LABELS[fs] + " skickad till baren!",
                                 Toast.LENGTH_SHORT).show();
                         renderSections();
                         return;
@@ -217,7 +217,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
                                     if (resp.isSuccessful()) {
                                         session.markSlotSent(fs);
                                         Toast.makeText(ReviewOrderActivity.this,
-                                                "✓ " + SLOT_LABELS[fs] + " skickad!",
+                                                SLOT_LABELS[fs] + " skickad!",
                                                 Toast.LENGTH_SHORT).show();
                                         renderSections();
                                     } else {
@@ -240,9 +240,9 @@ public class ReviewOrderActivity extends AppCompatActivity {
 
                 card.addView(btn);
             } else if (allSent) {
-                // Visa "✓ Skickad" om hela sloten är klar
+                // Visa "Skickad" om hela sloten är klar
                 TextView tvS = new TextView(this);
-                tvS.setText("✓ Skickad");
+                tvS.setText("Skickad");
                 tvS.setTextColor(SENT); tvS.setTextSize(12);
                 tvS.setPadding(0, dp(10), 0, 0);
                 card.addView(tvS);
@@ -271,7 +271,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
 
 // Betala-knapp
         Button btnPay = findViewById(R.id.btnSendToKitchen);
-        btnPay.setText("💳  Betala");
+        btnPay.setText("Betala");
         btnPay.setVisibility(View.VISIBLE);
         btnPay.setOnClickListener(v -> {
             Intent i = new Intent(this, PaymentActivity.class);
@@ -304,7 +304,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
 
         // If only drinks were pending
         if (slotsToSend.isEmpty()) {
-            Toast.makeText(this, "✓ Skickad till baren!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Skickad till baren!", Toast.LENGTH_SHORT).show();
             renderSections();
             return;
         }
@@ -344,7 +344,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
                                             Toast.LENGTH_LONG).show();
                                 } else {
                                     Toast.makeText(ReviewOrderActivity.this,
-                                            "✓ Beställning skickad!",
+                                            "Beställning skickad!",
                                             Toast.LENGTH_SHORT).show();
                                 }
                                 renderSections();
@@ -384,7 +384,7 @@ public class ReviewOrderActivity extends AppCompatActivity {
             sb.append(it.cooking.trim());
         }
         if (it.sides != null && !it.sides.isEmpty()) {
-            if (sb.length() > 0) sb.append(" · ");
+            if (sb.length() > 0) sb.append(" - ");
             sb.append(String.join(", ", it.sides));
         }
         if (it.comment != null && !it.comment.trim().isEmpty()) {

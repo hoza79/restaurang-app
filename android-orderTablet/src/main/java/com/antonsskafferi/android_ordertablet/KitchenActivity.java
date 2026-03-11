@@ -43,7 +43,7 @@ public class KitchenActivity extends AppCompatActivity {
     private boolean completing = false;
 
     /**
-     * Lokal cache av avklarade kurser per bord (tableNumber → lista av klara kurser).
+     * Lokal cache av avklarade kurser per bord (tableNumber -> lista av klara kurser).
      * Rensas när bordet försvinner från backenden helt.
      */
     private final Map<Integer, List<KitchenOrder.Course>> doneCache = new LinkedHashMap<>();
@@ -85,7 +85,7 @@ public class KitchenActivity extends AppCompatActivity {
     /**
      * Markerar den globalt högst prioriterade aktiva kursen som klar.
      * Det är alltid currentCourse() hos det första kortet i listan
-     * (listan är sorterad på slot → createdAt).
+     * (listan är sorterad på slot -> createdAt).
      */
     private void completeFirstBatch() {
         if (activeOrders.isEmpty()) return;
@@ -99,7 +99,7 @@ public class KitchenActivity extends AppCompatActivity {
         doneCache.computeIfAbsent(first.tableNumber, k -> new ArrayList<>()).add(cur);
         adapter.notifyDataSetChanged();
 
-        completeBatch(cur.batchId); // ← använder kursens eget batchId
+        completeBatch(cur.batchId); // Använder kursens eget batchId
     }
 
     private void completeBatch(int batchId) {
@@ -158,7 +158,7 @@ public class KitchenActivity extends AppCompatActivity {
                     int tableNum = entry.getKey();
                     List<KitchenBatchDto> batches = entry.getValue();
 
-                    // Använd första batchId bara som kortkortets id (spelar ingen roll längre)
+                    // Använd första batchId bara som kortkortets id
                     KitchenOrder o = new KitchenOrder(batches.get(0).batchId, tableNum);
 
                     // Lägg till ALLA kurser från backenden (ej klara än)
@@ -171,7 +171,7 @@ public class KitchenActivity extends AppCompatActivity {
                                 if (it.quantity != null && it.quantity > 1)
                                     sb.append(" x").append(it.quantity);
                                 if (it.notes != null && !it.notes.trim().isEmpty())
-                                    sb.append("\n   💬 ").append(it.notes.trim());
+                                    sb.append("\n   Note: ").append(it.notes.trim());
                                 dishes.add(sb.toString());
                             }
                         }
@@ -192,7 +192,7 @@ public class KitchenActivity extends AppCompatActivity {
 
                 completing = false;
 
-                // Sortera korten: lägst aktiv slot → äldst createdAt
+                // Sortera korten: lägst aktiv slot -> äldst createdAt
                 fresh.sort((a, b) -> {
                     KitchenOrder.Course ca = a.currentCourse();
                     KitchenOrder.Course cb = b.currentCourse();

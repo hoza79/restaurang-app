@@ -58,7 +58,7 @@ public class PaymentActivity extends AppCompatActivity {
         root.addView(tvTotal);
 
         // Kort-knapp
-        Button btnKort = payBtn("💳  Betala med Kort", 0xFF1565C0);
+        Button btnKort = payBtn("Betala med Kort", 0xFF1565C0);
         btnKort.setOnClickListener(v -> confirmPayment("Kortbetalning", tableNum));
         root.addView(btnKort);
 
@@ -68,7 +68,7 @@ public class PaymentActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(16)));
         root.addView(spacer);
 
-        Button btnSwish = payBtn("📱  Betala med Swish", 0xFF1B5E20);
+        Button btnSwish = payBtn("Betala med Swish", 0xFF1B5E20);
         btnSwish.setOnClickListener(v -> confirmPayment("Swish", tableNum));
         root.addView(btnSwish);
 
@@ -106,7 +106,7 @@ public class PaymentActivity extends AppCompatActivity {
                     Cart.closeTable(tableNum);
 
                     Toast.makeText(PaymentActivity.this,
-                            "✓ " + method + " klar – Bord " + tableNum + " är ledigt!",
+                            method + " klar – Bord " + tableNum + " är ledigt!",
                             Toast.LENGTH_LONG).show();
 
                     Intent i = new Intent(PaymentActivity.this, TableSelectActivity.class);

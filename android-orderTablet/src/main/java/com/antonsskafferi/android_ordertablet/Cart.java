@@ -4,7 +4,7 @@ import java.util.*;
 
 /**
  * Notan är ALLTID öppen per bord tills betalning markeras.
- * CartSession håller alla items för ett bord – skickade och oskickade.
+ * CartSession håller alla items för ett bord - skickade och oskickade.
  */
 public class Cart {
 
@@ -12,10 +12,10 @@ public class Cart {
     private static final Map<Integer, CartSession> sessions = new HashMap<>();
     private static int activeTable = -1;
 
-    // ── Session-klass ──────────────────────────────────────────────
+    // Session-klass
     public static class CartSession {
         public final int tableNumber;
-        // NEW: DB primary key for DiningTable
+        // DB primary key for DiningTable
         public Integer tableId;
         public final List<OrderItem> items = new ArrayList<>();
         public boolean paid = false;
@@ -79,7 +79,7 @@ public class Cart {
         public int itemCount() { return items.size(); }
     }
 
-    // ── Statiska hjälpmetoder ─────────────────────────────────────
+    // Statiska hjälpmetoder
 
     /** Öppnar (eller återhämtar) en session för ett bord. */
     public static CartSession openTable(int tableNumber) {
@@ -102,7 +102,7 @@ public class Cart {
         if (s.tableNumber >= 0) s.tableId = tableId;
     }
 
-    /** Hämtar aktiv session (kraschar aldrig – skapar om null). */
+    /** Hämtar aktiv session (kraschar aldrig - skapar om null). */
     public static CartSession current() {
         if (activeTable < 0 || !sessions.containsKey(activeTable))
             return new CartSession(-1); // fallback
@@ -116,7 +116,7 @@ public class Cart {
         return s.tableId;
     }
 
-    /** Markera bord som betalt – stänger sessionen. */
+    /** Markera bord som betalt - stänger sessionen. */
     public static void closeTable(int tableNumber) {
         sessions.remove(tableNumber);
         if (activeTable == tableNumber) activeTable = -1;

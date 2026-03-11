@@ -68,7 +68,7 @@ public class OrderActivity extends AppCompatActivity {
                 ? pending + " osänd" + (pending > 1 ? "a" : "")
                 : total + " rätter");
         tvCartSummary.setText("Bord " + Cart.getActiveTable()
-                + " · " + total + " rätter · "
+                + " - " + total + " rätter - "
                 + String.format("%.0f kr", session.total()));
     }
 
@@ -81,7 +81,7 @@ public class OrderActivity extends AppCompatActivity {
     }
 
     private void loadMenuThenSetupPager(ViewPager2 pager, TabLayout tabLayout) {
-        // If already loaded once, don’t refetch every time
+        // If already loaded once, don't refetch every time
         if (MenuData.hasApiMenu()) {
             setupPager(pager, tabLayout);
             return;
