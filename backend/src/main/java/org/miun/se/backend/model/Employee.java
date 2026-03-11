@@ -6,6 +6,7 @@ import org.miun.se.backend.model.enums.EmployeeRole;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "employee")
@@ -31,6 +32,9 @@ public class Employee {
 
     @Column(name = "email_address", nullable = false, unique = true)
     private String emailAddress;
+
+    @Column(name = "login_token", nullable = false, unique = true)
+    private String loginToken;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -60,6 +64,9 @@ public class Employee {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (loginToken == null) {
+            loginToken = UUID.randomUUID().toString();
+        }
     }
 
     @PreUpdate
@@ -86,6 +93,9 @@ public class Employee {
 
     public String getEmailAddress() { return emailAddress; }
     public void setEmailAddress(String emailAddress) { this.emailAddress = emailAddress; }
+
+    public String getLoginToken() { return loginToken; }
+    public void setLoginToken(String loginToken) { this.loginToken = loginToken; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

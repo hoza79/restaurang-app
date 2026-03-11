@@ -7,7 +7,7 @@ import retrofit2.http.*;
 public interface ApiService {
 
     @GET("employees/login")
-    Call<EmployeeDto> login(@Query("email") String email);
+    Call<EmployeeDto> login(@Query("token") String token);
 
     @GET("employees")
     Call<List<EmployeeDto>> getAllEmployees();

@@ -1,5 +1,9 @@
 package org.miun.se.backend.rest;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import org.miun.se.backend.DTO.EmployeeDto;
 import org.miun.se.backend.DTO.KitchenOrderDto;
 import org.miun.se.backend.DTO.ShiftDto;
@@ -12,6 +16,9 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
+
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,23 +45,47 @@ public class EmployeeResource {
         return Response.status(Response.Status.CREATED).entity(toDto(employee)).build();
     }
 
-    // GET /api/employees/login?email={email}
+    // GET /api/employees/login?token={token}
     @GET
     @Path("/login")
-    public Response login(@QueryParam("email") String email) {
-        if (email == null || email.isBlank()) {
+    public Response login(@QueryParam("token") String token) {
+        if (token == null || token.isBlank()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\":\"email is required\"}").build();
+                    .entity("{\"error\":\"token is required\"}").build();
         }
         TypedQuery<Employee> q = em.createQuery(
-                "SELECT e FROM Employee e WHERE e.emailAddress = :email", Employee.class);
-        q.setParameter("email", email);
+                "SELECT e FROM Employee e WHERE e.loginToken = :token", Employee.class);
+        q.setParameter("token", token);
         List<Employee> results = q.getResultList();
         if (results.isEmpty()) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity("{\"error\":\"No employee found\"}").build();
+                    .entity("{\"error\":\"Invalid login token\"}").build();
         }
         return Response.ok(toDto(results.getFirst())).build();
+    }
+
+    // GET /api/employees/{employeeId}/qr
+    @GET
+    @Path("/{employeeId}/qr")
+    @Produces("image/png")
+    public Response getEmployeeQrCode(@PathParam("employeeId") Integer id) {
+        Employee e = em.find(Employee.class, id);
+        if (e == null) return Response.status(Response.Status.NOT_FOUND).build();
+
+        String token = e.getLoginToken();
+        
+        return Response.ok((StreamingOutput) output -> {
+            try {
+                QRCodeWriter qrCodeWriter = new QRCodeWriter();
+                BitMatrix bitMatrix = qrCodeWriter.encode(token, BarcodeFormat.QR_CODE, 250, 250);
+
+                ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();
+                MatrixToImageWriter.writeToStream(bitMatrix, "PNG", pngOutputStream);
+                output.write(pngOutputStream.toByteArray());
+            } catch (Exception ex) {
+                throw new WebApplicationException("Could not generate QR code", ex);
+            }
+        }).build();
     }
 
     // GET /api/employees

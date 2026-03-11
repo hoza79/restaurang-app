@@ -6,10 +6,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RetrofitClient {
 
     // VIKTIGT: 10.0.2.2 är "localhost" för Android-emulatorn.
-    private static final String BASE_URL = "http://10.0.2.2:8080/backend/api/";
+    //private static final String BASE_URL = "http://10.0.2.2:8080/backend/api/";
 
     // If testing on a physical phone on same Wi-Fi, use:
-    //private static final String BASE_URL = "http://192.168.1.58:8080/backend/api/";
+    private static final String BASE_URL = "http://192.168.1.58:8080/backend/api/";
 
     private static Retrofit retrofit = null;
 
