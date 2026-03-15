@@ -67,6 +67,15 @@ public class MusicResource{
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
+        String imageFileName = musicEvent.getImagePath();
+
+        File rootFile = new File(System.getProperty("user.dir")).getParentFile();
+        File imgFile = new File(rootFile, "/Images/" + imageFileName);
+
+        if(!imgFile.delete()){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
         em.remove(musicEvent);
 
         return Response.ok().build();
@@ -98,7 +107,7 @@ public class MusicResource{
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Transactional
-    public Response saveFileReturnPath(@FormParam("image") EntityPart image, @FormParam("name") String eventName){
+    public Response saveFileReturnName(@FormParam("image") EntityPart image, @FormParam("name") String eventName){
 
         if(image == null || eventName == null){
             return Response.status(Response.Status.NO_CONTENT).build();
@@ -123,12 +132,10 @@ public class MusicResource{
             out = new FileOutputStream(file);
 
             in.transferTo(out);
-            String path = "domains/domain1/Images/" + fileName;
 
-            return Response.status(Response.Status.CREATED).entity(path).build();
-
+            return Response.status(Response.Status.CREATED).entity(fileName).build();
         } catch (IOException e) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         } finally {
             if(in != null){
                 try {
@@ -144,4 +151,19 @@ public class MusicResource{
 
     }
 
+
+    @GET
+    @Path("/images/{imageName}")
+    @Produces({"image/jpeg"})
+    public Response getImage(@PathParam("imageName") String imageFileName){
+
+        File rootFile = new File(System.getProperty("user.dir")).getParentFile();
+        File imgFile = new File(rootFile, "/Images/" + imageFileName);
+
+        if(rootFile.exists()){
+            return Response.ok(imgFile).build();
+        }
+
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
 }

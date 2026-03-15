@@ -19,6 +19,7 @@ buildNumber.properties
 /*.ipr
 /*.iws
 *.ai
+*.idea
 
 # ====================
 # OS-specific files
@@ -60,3 +61,9 @@ dist/
 # ====================
 *~
 *.swp
+
+# ====================
+# Gradle
+# ====================
+
+local.properties

@@ -1,0 +1,10 @@
+// Root-level build.gradle
+// Applies Gradle Version Catalog plugins globally, does not apply to modules yet
+
+plugins {
+    alias(libs.plugins.android.application) apply false
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
