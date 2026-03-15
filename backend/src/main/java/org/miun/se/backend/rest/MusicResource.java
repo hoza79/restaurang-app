@@ -67,6 +67,15 @@ public class MusicResource{
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
+        String imageFileName = musicEvent.getImagePath();
+
+        File rootFile = new File(System.getProperty("user.dir")).getParentFile();
+        File imgFile = new File(rootFile, "/Images/" + imageFileName);
+
+        if(!imgFile.delete()){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
         em.remove(musicEvent);
 
         return Response.ok().build();
@@ -157,5 +166,4 @@ public class MusicResource{
 
         return Response.status(Response.Status.NOT_FOUND).build();
     }
-
 }
