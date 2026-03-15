@@ -115,16 +115,18 @@ function CarteAdmin() {
                   <input type="text" placeholder="145" value={newItem.price} onChange={(e) => setNewItem({ ...newItem, price: e.target.value })} />
                 </div>
               </div>
-              <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <label style={{ margin: 0 }}>Nötkött</label>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${newItem.beef ? 'btn-gold' : 'btn-outline'}`}
-                  onClick={() => setNewItem({ ...newItem, beef: !newItem.beef })}
-                >
-                  {newItem.beef ? 'Ja' : 'Nej'}
-                </button>
-              </div>
+              {!['Efterrätt', 'Dryck'].includes(cat.category) && (
+                <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <label style={{ margin: 0 }}>Nötkött</label>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${newItem.beef ? 'btn-gold' : 'btn-outline'}`}
+                    onClick={() => setNewItem({ ...newItem, beef: !newItem.beef })}
+                  >
+                    {newItem.beef ? 'Ja' : 'Nej'}
+                  </button>
+                </div>
+              )}
               <div className="form-actions">
                 <button className="btn btn-outline btn-sm" onClick={() => setAddingTo(null)}>Avbryt</button>
                 <button className="btn btn-gold btn-sm" onClick={() => handleAdd(catIndex)} disabled={saving}>
@@ -136,7 +138,7 @@ function CarteAdmin() {
 
           <table className="admin-table">
             <thead>
-              <tr><th>Rätt</th><th>Beskrivning</th><th>Pris</th><th>Nötkött</th><th></th></tr>
+              <tr><th>Rätt</th><th>Beskrivning</th><th>Pris</th>{!['Efterrätt', 'Dryck'].includes(cat.category) && <th>Nötkött</th>}<th></th></tr>
             </thead>
             <tbody>
               {cat.items.map((item) => (
@@ -147,15 +149,17 @@ function CarteAdmin() {
                       <td><input type="text" value={editValues.name} onChange={(e) => setEditValues({ ...editValues, name: e.target.value })} /></td>
                       <td><input type="text" value={editValues.description} onChange={(e) => setEditValues({ ...editValues, description: e.target.value })} /></td>
                       <td><input type="text" value={editValues.price} onChange={(e) => setEditValues({ ...editValues, price: e.target.value })} style={{ width: '70px' }} /></td>
-                      <td>
-                        <button
-                          type="button"
-                          className={`btn btn-sm ${editValues.options ? 'btn-gold' : 'btn-outline'}`}
-                          onClick={() => setEditValues({ ...editValues, options: !editValues.options })}
-                        >
-                          {editValues.options ? 'Ja' : 'Nej'}
-                        </button>
-                      </td>
+                      {!['Efterrätt', 'Dryck'].includes(cat.category) && (
+                        <td>
+                          <button
+                            type="button"
+                            className={`btn btn-sm ${editValues.options ? 'btn-gold' : 'btn-outline'}`}
+                            onClick={() => setEditValues({ ...editValues, options: !editValues.options })}
+                          >
+                            {editValues.options ? 'Ja' : 'Nej'}
+                          </button>
+                        </td>
+                      )}
                       <td className="actions">
                         <button className="btn btn-outline btn-sm" onClick={() => setEditingId(null)}>Avbryt</button>
                         <button className="btn btn-gold btn-sm" onClick={() => handleEditSave(item.id)} disabled={saving}>
@@ -169,7 +173,7 @@ function CarteAdmin() {
                       <td>{item.name}</td>
                       <td>{item.description}</td>
                       <td>{item.price} kr</td>
-                      <td>{item.options ? 'Ja' : 'Nej'}</td>
+                      {!['Efterrätt', 'Dryck'].includes(cat.category) && <td>{item.options ? 'Ja' : 'Nej'}</td>}
                       <td className="actions">
                         <button className="btn btn-outline btn-sm" onClick={() => handleEditStart(item)}>Redigera</button>
                         <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)}>Ta bort</button>
