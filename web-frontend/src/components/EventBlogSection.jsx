@@ -35,10 +35,14 @@ function EventCard({ event }) {
   return (
     <div className="event-card">
       <div className="event-card-top">
-        <div className="event-date-block">
-          <div className="event-day">{day}</div>
-          <div className="event-month">{month}</div>
-        </div>
+        {event.imgPath ? (
+          <img src={`/api/music/images/${event.imgPath}`} alt={event.title} className="event-date-block" style={{ objectFit: 'cover', padding: 0, width: '70px', height: '70px' }} />
+        ) : (
+          <div className="event-date-block">
+            <div className="event-day">{day}</div>
+            <div className="event-month">{month}</div>
+          </div>
+        )}
         <div className="event-info">
           <h3>{event.title}</h3>
           <p className="event-desc">{event.description}</p>

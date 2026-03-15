@@ -65,7 +65,7 @@ function MusicAdmin() {
   const handleEditStart = (event) => {
     setEditingId(event.id)
     setEditFile(null)
-    setEditPreview(event.imgPath || null)
+    setEditPreview(event.imgPath ? `/api/music/images/${event.imgPath}` : null)
     setEditValues({
       title: event.title,
       description: event.description || '',
@@ -210,7 +210,7 @@ function MusicAdmin() {
                   <>
                     <td>
                       {event.imgPath
-                        ? <img src={event.imgPath} alt={event.title} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />
+                        ? <img src={`/api/music/images/${event.imgPath}`} alt={event.title} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', verticalAlign: 'middle' }} />
                         : <span style={{ color: 'var(--text-muted-on-light)', fontSize: '0.8rem' }}>Ingen bild</span>
                       }
                     </td>

@@ -72,9 +72,7 @@ public class MusicResource{
         File rootFile = new File(System.getProperty("user.dir")).getParentFile();
         File imgFile = new File(rootFile, "/Images/" + imageFileName);
 
-        if(!imgFile.delete()){
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        }
+        imgFile.delete();
 
         em.remove(musicEvent);
 

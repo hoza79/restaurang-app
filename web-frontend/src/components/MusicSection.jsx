@@ -38,11 +38,15 @@ function MusicSection() {
             const { day, month, weekday, time } = formatMusicDate(event.date)
             return (
               <div className="music-item" key={event.id}>
-                <div className="date-block">
-                  <div className="day">{day}</div>
-                  <div className="month">{month}</div>
-                  <div className="weekday">{weekday}</div>
-                </div>
+                {event.imgPath ? (
+                  <img src={`/api/music/images/${event.imgPath}`} alt={event.title} className="date-block" style={{ objectFit: 'cover', padding: 0, width: '180px', height: '100%', minHeight: '80px' }} />
+                ) : (
+                  <div className="date-block">
+                    <div className="day">{day}</div>
+                    <div className="month">{month}</div>
+                    <div className="weekday">{weekday}</div>
+                  </div>
+                )}
                 <div>
                   <h3>{event.title}</h3>
                   <p className="desc">{event.description}</p>

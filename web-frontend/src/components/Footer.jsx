@@ -21,7 +21,7 @@ function Footer() {
           <h4>Hitta oss</h4>
           <ul>
             <li>Storgatan 12</li>
-            <li>Stockholm</li>
+            <li>Sundsvall</li>
             <li>08-123 456 78</li>
             <li>info@antonsskafferi.se</li>
           </ul>

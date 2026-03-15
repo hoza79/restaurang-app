@@ -364,12 +364,12 @@ export async function deleteShift(shiftId) {
   if (!res.ok) throw new Error('Kunde inte ta bort passet')
 }
 
-// POST bild till musik, returnerar relativ sökväg (t.ex. "domains/domain1/Images/namn123.jpg")
+// POST bild till musik - returnerar filnamnet, bygger URL till GET-endpoint
 export async function uploadMusicImage(file, name) {
   const formData = new FormData()
   formData.append('image', file)
   formData.append('name', name)
   const res = await fetch('/api/music/images', { method: 'POST', body: formData })
   if (!res.ok) throw new Error('Kunde inte ladda upp bilden')
-  return await res.text()
+  return await res.text() // returnerar bara filnamnet, t.ex. "jazzNight1502.jpg"
 }

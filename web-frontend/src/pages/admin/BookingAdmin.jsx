@@ -160,14 +160,14 @@ function BookingAdmin() {
 
         <table className="admin-table">
           <thead>
-            <tr><th>Bord</th><th>Namn</th><th>Telefon</th><th>Gäster</th><th>Tid</th><th></th></tr>
+            <tr><th style={{ display: 'none' }}>Bord</th><th>Namn</th><th>Telefon</th><th>Gäster</th><th>Tid</th><th></th></tr>
           </thead>
           <tbody>
             {bookingList.map((b) => (
               <tr key={b.bookingId}>
                 {editingId === b.bookingId ? (
                   <>
-                    <td>
+                    <td style={{ display: 'none' }}>
                       <select value={editValues.tableId} onChange={(e) => setEditValues({ ...editValues, tableId: e.target.value })}>
                         <option value="">Inget bord</option>
                         {tables.map(t => (
@@ -198,7 +198,7 @@ function BookingAdmin() {
                   </>
                 ) : (
                   <>
-                    <td>{b.tableNumber ? `Bord ${b.tableNumber}` : '-'}</td>
+                    <td style={{ display: 'none' }}>{b.tableNumber ? `Bord ${b.tableNumber}` : '-'}</td>
                     <td>{b.firstName} {b.lastName}</td>
                     <td>{b.phoneNumber || '-'}</td>
                     <td>{b.guestCount}</td>

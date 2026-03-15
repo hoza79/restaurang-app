@@ -1,17 +1,32 @@
 import { useState } from 'react'
+import { addBooking } from '../api/menuApi'
 
 function BookingSection() {
   const [form, setForm] = useState({
-    name: '', phone: '', date: '', time: '18:00', guests: '2 personer', message: ''
+    name: '', phone: '', date: '', time: '18:00', guests: '2 personer'
   })
+  const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState(null)
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    alert('Tack för din bokning! (mockup, ingen data skickades)')
+    setError(null)
+    const guestCount = parseInt(form.guests) || 2
+    const dateTime = form.date && form.time ? `${form.date}T${form.time}:00` : form.date
+    const nameParts = form.name.trim().split(' ')
+    const firstName = nameParts[0] || ''
+    const lastName = nameParts.slice(1).join(' ') || ''
+    try {
+      await addBooking({ firstName, lastName, phoneNumber: form.phone, guestCount, date: dateTime })
+      setSubmitted(true)
+      setForm({ name: '', phone: '', date: '', time: '18:00', guests: '2 personer', message: '' })
+    } catch {
+      setError('Något gick fel, försök igen.')
+    }
   }
 
   return (
@@ -47,7 +62,7 @@ function BookingSection() {
             </div>
             <div className="info-item">
               <span className="label">Adress</span>
-              <span className="value">Storgatan 12, Stockholm</span>
+              <span className="value">Storgatan 12, Sundsvall</span>
             </div>
           </div>
 
@@ -93,10 +108,9 @@ function BookingSection() {
                 <option>6+ personer</option>
               </select>
             </div>
-            <div className="form-group">
-              <label>Meddelande</label>
-              <textarea name="message" rows="3" placeholder="Allergier, specialönskemål..." value={form.message} onChange={handleChange}></textarea>
-            </div>
+
+            {error && <p style={{ color: 'red', marginBottom: '0.5rem' }}>{error}</p>}
+            {submitted && <p style={{ color: 'green', marginBottom: '0.5rem' }}>Tack för din bokning!</p>}
             <button type="submit" className="btn-book">Reservera</button>
           </form>
         </div>
