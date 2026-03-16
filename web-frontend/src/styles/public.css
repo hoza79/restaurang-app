@@ -562,14 +562,36 @@
     font-size: 0.85rem;
 }
 
+.comment-delete-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.3);
+    font-size: 0.7rem;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    line-height: 1;
+}
+
+.comment-delete-btn:hover {
+    color: rgba(255,255,255,0.6);
+}
+
+.comment-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
 .comment-author {
     color: var(--gold);
     font-size: 0.75rem;
-    margin-right: 0.5rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
 }
 
 .comment-text {
     color: rgba(255,255,255,0.6);
+    margin-bottom: 0.3rem;
 }
 
 .comment-input-row {

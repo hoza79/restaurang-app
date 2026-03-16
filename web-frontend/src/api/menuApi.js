@@ -373,3 +373,41 @@ export async function uploadMusicImage(file, name) {
   if (!res.ok) throw new Error('Kunde inte ladda upp bilden')
   return await res.text() // returnerar bara filnamnet, t.ex. "jazzNight1502.jpg"
 }
+
+// kommentarer
+export async function getComments(eventId) {
+  const res = await fetch(`/api/music/${eventId}/comments`)
+  if (!res.ok) throw new Error('Kunde inte hämta kommentarer')
+  return res.json()
+}
+
+export async function addComment(eventId, name, message) {
+  const res = await fetch(`/api/music/${eventId}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, message })
+  })
+  if (!res.ok) throw new Error('Kunde inte lägga till kommentar')
+}
+
+export async function deleteComment(eventId, commentId) {
+  const res = await fetch(`/api/music/${eventId}/comments/${commentId}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error('Kunde inte ta bort kommentar')
+}
+
+export async function likeComment(commentId) {
+  await fetch(`/api/music/comments/${commentId}/like`, { method: 'PUT' })
+}
+
+export async function dislikeComment(commentId) {
+  await fetch(`/api/music/comments/${commentId}/dislike`, { method: 'PUT' })
+}
+
+// event likes
+export async function likeEvent(eventId) {
+  await fetch(`/api/music/${eventId}/like`, { method: 'PUT' })
+}
+
+export async function dislikeEvent(eventId) {
+  await fetch(`/api/music/${eventId}/dislike`, { method: 'PUT' })
+}

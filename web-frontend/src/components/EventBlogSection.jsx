@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getMusicEvents } from '../api/menuApi'
+import { getMusicEvents, getComments, addComment, deleteComment, likeComment, dislikeComment, likeEvent, dislikeEvent } from '../api/menuApi'
 
 function parseDate(dateStr) {
   if (!dateStr) return { day: '?', month: '?' }
@@ -11,23 +11,66 @@ function parseDate(dateStr) {
   }
 }
 
-// ett event-kort med likes och kommentarer
 function EventCard({ event }) {
   const [liked, setLiked] = useState(false)
-  const [likes, setLikes] = useState(0)
+  const [likes, setLikes] = useState(event.likes ?? 0)
   const [showComments, setShowComments] = useState(false)
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
+  const [commenterName, setCommenterName] = useState('')
+  const [likedComments, setLikedComments] = useState({})
+
+  useEffect(() => {
+    getComments(event.id).then(setComments).catch(() => {})
+  }, [event.id])
 
   const handleLike = () => {
-    setLikes(liked ? likes - 1 : likes + 1)
+    if (liked) {
+      dislikeEvent(event.id)
+      setLikes(l => l - 1)
+    } else {
+      likeEvent(event.id)
+      setLikes(l => l + 1)
+    }
     setLiked(!liked)
   }
 
-  const handleComment = () => {
+  const handleComment = async () => {
     if (!newComment.trim()) return
-    setComments([...comments, { id: Date.now(), author: 'Du', text: newComment }])
+    const name = commenterName.trim() || 'Gäst'
+    const message = newComment.trim()
+    const temp = { commentId: Date.now(), name, message, likes: 0 }
+    setComments(prev => [...prev, temp])
     setNewComment('')
+    try {
+      await addComment(event.id, name, message)
+    } catch {
+      setComments(prev => prev.filter(c => c.commentId !== temp.commentId))
+      return
+    }
+    try {
+      const updated = await getComments(event.id)
+      setComments(updated)
+    } catch {}
+  }
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await deleteComment(event.id, commentId)
+      setComments(prev => prev.filter(c => c.commentId !== commentId))
+    } catch {}
+  }
+
+  const handleCommentLike = (commentId) => {
+    if (likedComments[commentId]) {
+      dislikeComment(commentId)
+      setComments(prev => prev.map(c => c.commentId === commentId ? { ...c, likes: c.likes - 1 } : c))
+      setLikedComments(prev => ({ ...prev, [commentId]: false }))
+    } else {
+      likeComment(commentId)
+      setComments(prev => prev.map(c => c.commentId === commentId ? { ...c, likes: c.likes + 1 } : c))
+      setLikedComments(prev => ({ ...prev, [commentId]: true }))
+    }
   }
 
   const { day, month } = parseDate(event.date)
@@ -50,11 +93,9 @@ function EventCard({ event }) {
       </div>
 
       <div className="event-actions">
-        {/* like-knapp */}
         <button className={`event-like-btn${liked ? ' liked' : ''}`} onClick={handleLike}>
           ♥ {likes}
         </button>
-        {/* visa/göm kommentarer */}
         <button className="event-comment-btn" onClick={() => setShowComments(!showComments)}>
           💬 {comments.length} {comments.length === 1 ? 'kommentar' : 'kommentarer'}
         </button>
@@ -63,12 +104,28 @@ function EventCard({ event }) {
       {showComments && (
         <div className="event-comments">
           {comments.map(c => (
-            <div className="event-comment" key={c.id}>
-              <span className="comment-author">{c.author}</span>
-              <span className="comment-text">{c.text}</span>
+            <div className="event-comment" key={c.commentId}>
+              <div className="comment-body">
+                <div>
+                  <div className="comment-author">{c.name}</div>
+                  <div className="comment-text">{c.message}</div>
+                  <div className="comment-actions">
+                    <button className={`event-like-btn${likedComments[c.commentId] ? ' liked' : ''}`} onClick={() => handleCommentLike(c.commentId)}>
+                      ♥ {c.likes}
+                    </button>
+                  </div>
+                </div>
+                <button className="comment-delete-btn" onClick={() => handleDeleteComment(c.commentId)}>✕</button>
+              </div>
             </div>
           ))}
           <div className="comment-input-row">
+            <input
+              type="text"
+              placeholder="Ditt namn (valfritt)"
+              value={commenterName}
+              onChange={(e) => setCommenterName(e.target.value)}
+            />
             <input
               type="text"
               placeholder="Skriv en kommentar..."
@@ -110,7 +167,6 @@ function EventBlogSection() {
         </p>
 
         <div className="event-blog-columns">
-          {/* tidigare events */}
           <div className="event-column">
             <p className="event-column-label">Tidigare event</p>
             {previous.map(event => (
@@ -118,7 +174,6 @@ function EventBlogSection() {
             ))}
           </div>
 
-          {/* kommande events */}
           <div className="event-column">
             <p className="event-column-label">Kommande event</p>
             {upcoming.map(event => (
