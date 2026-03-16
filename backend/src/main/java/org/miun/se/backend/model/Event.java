@@ -24,6 +24,9 @@ public class Event {
     @Column(name = "image_path")
     private String imagePath;
 
+    @Column(name = "likes")
+    private Integer likes;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -61,6 +64,9 @@ public class Event {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public Integer getLikes() { return likes; }
+    public void setLikes(Integer likes) {this.likes = likes;}
 
     public LocalDateTime getEventTime() { return eventTime; }
     public void setEventTime(LocalDateTime eventTime) { this.eventTime = eventTime; }
