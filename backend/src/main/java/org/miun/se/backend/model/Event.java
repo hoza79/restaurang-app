@@ -40,6 +40,7 @@ public class Event {
         this.title = title;
         this.description = description;
         this.eventTime = eventTime;
+        this.likes = 0;
     }
 
     // Lifecycle callbacks
