@@ -7,6 +7,6 @@ public record MusicDto (
         String title,
         String description,
         LocalDateTime date,
-        String imgPath
-
+        String imgPath,
+        Integer likes
 ) {}

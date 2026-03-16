@@ -11,14 +11,18 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.ws.rs.core.EntityPart;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.miun.se.backend.DTO.CommentAddDto;
+import org.miun.se.backend.DTO.CommentDto;
 import org.miun.se.backend.DTO.MusicDto;
 import org.miun.se.backend.DTO.MusicAddDto;
+import org.miun.se.backend.model.Comment;
 import org.miun.se.backend.model.Event;
 
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Path("/music")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -35,7 +39,7 @@ public class MusicResource{
 
         List<MusicDto> musicList = new ArrayList<>();
         for(Event event: eventList){
-            musicList.add(new MusicDto(event.getEventId(),event.getTitle(), event.getDescription(), event.getEventTime(), event.getImagePath()));
+            musicList.add(new MusicDto(event.getEventId(),event.getTitle(), event.getDescription(), event.getEventTime(), event.getImagePath(), event.getLikes()));
         }
 
         return musicList;
@@ -163,5 +167,154 @@ public class MusicResource{
         }
 
         return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    @GET
+    @Path("/{eventId}/comments")
+    public Response getComments(@PathParam("eventId") Integer eventId){
+
+        Event event;
+        try {
+            event = em.createQuery(
+                    "SELECT event FROM Event event WHERE event.eventId = :eventId", Event.class)
+                    .setParameter("eventId", eventId).getSingleResult();
+        } catch (Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+
+        List<Comment> comments;
+        try {
+            comments = em.createQuery(
+                            "SELECT comment FROM Comment comment WHERE comment.event.eventId = :eventId", Comment.class)
+                    .setParameter("eventId", eventId).getResultList();
+        } catch (Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        List<CommentDto> commentsList = new ArrayList<>();
+        for (Comment com : comments){
+            commentsList.add(new CommentDto(com.getCommentId(), com.getName(), com.getMessage(), com.getLikes(), com.getCreatedAt()));
+        }
+        return Response.ok().entity(commentsList).build();
+    }
+
+    @POST
+    @Path("/{eventId}/comments")
+    @Transactional
+    public Response setComment(@PathParam("eventId") Integer eventId, CommentAddDto comDto){
+        Event event;
+        try {
+            event = em.createQuery(
+                            "SELECT event FROM Event event WHERE event.eventId = :eventId", Event.class)
+                    .setParameter("eventId", eventId)
+                    .getSingleResult();
+        } catch (Exception e) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        Comment newComment = new Comment(event, comDto.name(), comDto.message());
+        em.persist(newComment);
+        return Response.status(Response.Status.CREATED).build();
+    }
+
+    @PUT
+    @Path("/comments/{commentId}/like")
+    @Transactional
+    public Response addCommentLike(@PathParam("commentId") Integer commentId){
+        Comment comment;
+        try {
+            comment = em.createQuery(
+                    "SELECT comment FROM Comment comment WHERE comment.commentId = :commentId", Comment.class)
+                    .setParameter("commentId", commentId).getSingleResult();
+        } catch (Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        comment.setLikes(comment.getLikes() + 1);
+
+        return Response.ok().entity(comment.getLikes()).build();
+
+    }
+
+    @PUT
+    @Path("/comments/{commentId}/dislike")
+    @Transactional
+    public Response removeCommentLike(@PathParam("commentId") Integer commentId){
+        Comment comment;
+        try {
+            comment = em.createQuery(
+                    "SELECT comment FROM Comment comment WHERE comment.commentId = :commentId", Comment.class)
+                    .setParameter("commentId", commentId).getSingleResult();
+        } catch (Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        comment.setLikes(comment.getLikes() - 1);
+
+        return Response.ok().entity(comment.getLikes()).build();
+    }
+
+    @PUT
+    @Path("/{eventId}/like")
+    @Transactional
+    public Response addEventLike(@PathParam("eventId") Integer eventId){
+        Event event;
+        try {
+            event = em.createQuery(
+                    "SELECT event FROM Event event WHERE event.eventId = :eventId", Event.class)
+                    .setParameter("eventId", eventId).getSingleResult();
+        } catch (Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        event.setLikes(event.getLikes() + 1);
+        return Response.ok().entity(event.getLikes()).build();
+
+    }
+
+
+    @PUT
+    @Path("/{eventId}/dislike")
+    @Transactional
+    public Response removeEventLike(@PathParam("eventId") Integer eventId){
+        Event event;
+        try {
+            event = em.createQuery(
+                    "SELECT event FROM Event event WHERE event.eventId = :eventId", Event.class)
+                    .setParameter("eventId", eventId).getSingleResult();
+        } catch (Exception e){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        event.setLikes(event.getLikes() - 1);
+
+        return Response.ok().entity(event.getLikes()).build();
+    }
+
+
+
+    @DELETE
+    @Path("/{eventId}/comments/{commentId}")
+    @Transactional
+    public Response removeComment(@PathParam("eventId") Integer eventId, @PathParam("commentId") Integer commentId) {
+
+        Comment comment;
+        try {
+            comment = em.createQuery(
+                            "SELECT comment FROM Comment comment WHERE comment.commentId = :commentId", Comment.class)
+                    .setParameter("commentId", commentId).getSingleResult();
+        } catch (Exception e) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        Event event = comment.getEvent();
+        if (!Objects.equals(event.getEventId(), eventId)) {
+            return Response.status(Response.Status.NOT_FOUND).entity("No such comment in event").build();
+        }
+
+        em.remove(comment);
+
+        return Response.ok().build();
     }
 }

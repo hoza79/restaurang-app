@@ -36,7 +36,7 @@ public class Comment {
     protected Comment() {
     }
 
-    public Comment(Event event, String name, String message, Integer likes) {
+    public Comment(Event event, String name, String message) {
         this.event = event;
         this.name = name;
         this.message = message;
@@ -59,7 +59,7 @@ public class Comment {
     // Getters and setters
 
     public Integer getCommentId() { return commentId; }
-    public void setCommentId(Integer shiftId) { this.commentId = commentId; }
+    public void setCommentId(Integer commentId) { this.commentId = commentId; }
 
     public Event getEvent() { return event; }
     public void setEvent(Event event) { this.event = event; }
