@@ -5,8 +5,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public final class ApiClient {
 
+    private static final String BASE_URL = "http://10.0.2.2:8080/backend/api/";
+
     // Emulator -> your PC localhost:
-    private static final String BASE_URL = "http://192.168.0.205:8080/backend/api/";
+    //private static final String BASE_URL = "http://192.168.0.205:8080/backend/api/";
 
     // If testing on a physical phone on same Wi-Fi, use:
     // private static final String BASE_URL = "http://192.168.x.y:8080/backend/api/";
