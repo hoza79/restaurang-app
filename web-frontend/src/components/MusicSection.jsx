@@ -51,7 +51,7 @@ function MusicSection() {
                   <h3>{event.title}</h3>
                   <p className="desc">{event.description}</p>
                 </div>
-                {time && <span className="time-label">{time}</span>}
+                {time && <span className="time-label">{weekday} {day} {time}</span>}
               </div>
             )
           })}
